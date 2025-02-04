@@ -18,13 +18,19 @@
                 "y": 253.25
             }
         },
+        "tilesets/cliffs.tsx": {
+            "dynamicWrapping": true
+        },
         "tilesets/grassland.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
             "scaleInEditor": 1
+        },
+        "tilesets/trees.tsx": {
+            "dynamicWrapping": true
         }
     },
-    "last.imagePath": "/home/komatr/kamikaze/resources/tilesets",
+    "last.imagePath": "/home/komatr/kamikaze/resources/tilesets/trees",
     "map.lastUsedFormat": "tmx",
     "map.orientation": null,
     "map.tileWidth": 64,
@@ -41,5 +47,6 @@
     "tileset.tileSize": {
         "height": 32,
         "width": 64
-    }
+    },
+    "tileset.type": 1
 }
