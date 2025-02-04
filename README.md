@@ -15,3 +15,9 @@
 * **Build Raylib and the game** `make build`
 
 * **Run the game** make run
+
+## Folders
+
+* **resources** - folder for game`s assets
+* **external** - external libraries (=> no other downloads needed)
+* **tiled** - folder for Tiled editor
