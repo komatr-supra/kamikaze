@@ -32,13 +32,6 @@ jobs:
       - name: Checkout Project
         uses: actions/checkout@v4.2.1
 
-      - name: Cache build/_deps
-        uses: actions/cache@v3
-        with:
-          path: ${{github.workspace}}/build/_deps
-          key: ${{ matrix.os }}-build-deps
-          restore-keys: ${{ matrix.os }}-build-deps
-
       - name: Setup Environment
         run: | 
           sudo apt-get update -qq
