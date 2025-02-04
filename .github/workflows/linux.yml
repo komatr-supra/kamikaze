@@ -49,12 +49,11 @@ jobs:
       - name: Configure Project
         run: |
           cmake build . -S . -B ${{ env.PROJECT_BUILD_PATH }} -DCMAKE_BUILD_TYPE=Release
-          BUILD_TYPE=Release make configure
 
       - name: Build Project
         run: |
           cd ${{ env.PROJECT_BUILD_PATH }}
-          make build PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE PROJECT_CUSTOM_FLAGS=${{ env.PROJECT_CUSTOM_FLAGS }}
+          make PLATFORM=PLATFORM_DESKTOP BUILD_MODE=RELEASE
       
       - name: Generate Artifacts
         run: |
