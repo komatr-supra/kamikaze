@@ -52,4 +52,4 @@ Mkfile.old
 dkms.conf
 
 # CMake files - dont know if it is for all IDEs
-cmake
+/cmake
