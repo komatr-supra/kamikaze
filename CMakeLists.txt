@@ -13,15 +13,4 @@ set(RAYLIB_BUILD_EXAMPLES OFF CACHE BOOL "Don't build raylib examples" FORCE)
 # Dependencies - sorry for this, folder is presistent, you can delete cmake folder and the project will build without internet connection, or download a repo and got everything
 add_subdirectory(external/raylib-5.5)
 
-# simple resources copy - TODO better way and streucture? - still ok for start
-add_custom_target(copy_resources ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources
-)
-
-# main build
-add_executable(kamikaze main.c)
-target_link_libraries(kamikaze raylib)
-
-# just copy folder before build - maybe not required?
-add_dependencies(kamikaze copy_resources)
+add_subdirectory(src)
