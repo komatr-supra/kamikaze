@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "map_manager.h"
+#include "animation.h"
 
 int main(void)
 {
@@ -9,6 +10,8 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "Kamikaze");
 
     Vector2 playerPosition = { (float)screenWidth/2, (float)screenHeight/2 };
+
+
 
     SetTargetFPS(60);
     if(!MapParser(0)){

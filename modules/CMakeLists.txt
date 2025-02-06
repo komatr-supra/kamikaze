@@ -1,2 +1,3 @@
-add_subdirectory(resource_manager)
 add_subdirectory(sprite)
+add_subdirectory(resource_manager)
+add_subdirectory(animation)

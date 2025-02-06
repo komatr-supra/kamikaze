@@ -1,7 +1,7 @@
 #ifndef SPRITE_H
 #define SPRITE_H
 
-#define MAX_SPRITE_NAME_LENGHT 64
+#define MAX_SPRITE_NAME_LENGHT 32
 
 #include "raylib.h"     //there are a raylib structs
 
@@ -15,4 +15,4 @@ typedef struct Sprite
 
 Sprite SpriteCreate(char* name, Texture2D texture, Rectangle sourceRectangle, Vector2 origin);
 
-#endif SPRITE_H
+#endif
