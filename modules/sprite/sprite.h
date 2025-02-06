@@ -13,6 +13,6 @@ typedef struct Sprite
     Vector2 origin;
 } Sprite;
 
-Sprite LoadSprite(char* name, Texture2D texture, Rectangle sourceRectangle, Vector2 origin)
+Sprite SpriteCreate(char* name, Texture2D texture, Rectangle sourceRectangle, Vector2 origin);
 
 #endif SPRITE_H

@@ -4,7 +4,7 @@
 #include "string.h"
 
 
-Sprite LoadSprite(char* name, Texture2D texture, Rectangle sourceRectangle, Vector2 origin)
+Sprite SpriteCreate(char* name, Texture2D texture, Rectangle sourceRectangle, Vector2 origin)
 {
     Sprite sprite;
     strcpy(sprite.name, name);  // must make a name copy
