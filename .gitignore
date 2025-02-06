@@ -53,3 +53,6 @@ dkms.conf
 
 # CMake files - dont know if it is for all IDEs
 /cmake
+
+# Tiled personal files (Tiled layout after opening)
+*.tiled-session
