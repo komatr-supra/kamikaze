@@ -1,0 +1,77 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "/home/komatr/kamikaze/src/resources/maps/test_map.tmx",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "/home/komatr/kamikaze/src/resources/maps/test_map.tmx": {
+            "expandedGroupLayers": [
+                5,
+                2
+            ],
+            "scale": 1,
+            "selectedLayer": 3,
+            "viewCenter": {
+                "x": 961,
+                "y": 423.5
+            }
+        },
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/cliffs.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/entrances.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/ground.tsx": {
+            "dynamicWrapping": false,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/trees.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/water.tsx": {
+            "dynamicWrapping": true,
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "/home/komatr/kamikaze/tiled/tilesets/greenland/trees",
+    "map.lastUsedFormat": "tmx",
+    "map.orientation": null,
+    "map.tileWidth": 64,
+    "openFiles": [
+        "/home/komatr/kamikaze/src/resources/maps/test_map.tmx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/ground.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/cliffs.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/water.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/entrances.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/trees.tsx"
+    ],
+    "project": "kamikaze.tiled-project",
+    "recentFiles": [
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/trees.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/entrances.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/water.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/cliffs.tsx",
+        "/home/komatr/kamikaze/src/resources/tilesets/greenland/ground.tsx",
+        "/home/komatr/kamikaze/src/resources/maps/test_map.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.margin": 0,
+    "tileset.spacing": 0,
+    "tileset.tileSize": {
+        "height": 32,
+        "width": 64
+    },
+    "tileset.type": 1
+}
