@@ -10,6 +10,8 @@ add_compile_options(-Wimplicit-function-declaration)
 
 set(RAYLIB_BUILD_EXAMPLES OFF CACHE BOOL "Don't build raylib examples" FORCE)
 
+# modules
+add_subdirectory(modules)
 # Dependencies - sorry for this, folder is presistent, you can delete cmake folder and the project will build without internet connection, or download a repo and got everything
 add_subdirectory(external/raylib-5.5)
 
