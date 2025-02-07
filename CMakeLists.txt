@@ -18,7 +18,7 @@ add_subdirectory(external/raylib-5.5)
 # simple resources copy - TODO better way and streucture? - still ok for start
 add_custom_target(copy_resources ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources
+    ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/kamikaze/resources
 )
 
 add_subdirectory(src)

@@ -15,4 +15,4 @@ typedef struct Sprite
 
 Sprite SpriteCreate(char* name, Texture2D texture, Rectangle sourceRectangle, Vector2 origin);
 
-#endif SPRITE_H
+#endif //SPRITE_H

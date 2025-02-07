@@ -4,8 +4,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <dirent.h> 
 
+// Testing how to trim a string (did not working yet)
+void SkipWhitespace(const char *xml) {
+    while (isspace((unsigned char)*xml)) {
+        (xml)++;
+    }
+}
 // Function to read the XML file into a string
 bool ReadFile(const char filename[]) {
     DIR *d;
@@ -40,6 +47,7 @@ bool ReadFile(const char filename[]) {
 
     while ((read = getline(&line, &len, file)) != -1) {
         TraceLog(LOG_INFO, TextFormat("Retrieved line of length %zu:", read));
+        SkipWhitespace(line);
         TraceLog(LOG_INFO, TextFormat("%s", line));
     }
 
