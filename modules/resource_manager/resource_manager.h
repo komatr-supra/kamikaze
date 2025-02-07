@@ -9,6 +9,22 @@
 
 #include "raylib.h"
 
-Texture2D GetTexture(char* path);
+#define MAX_PATH_LENGTH 128
+#define MAX_TEXTURES 32
+
+typedef struct {
+    char path[MAX_PATH_LENGTH];
+    Texture2D texture;
+} TextureResource;
+
+typedef struct {
+    TextureResource textures[MAX_TEXTURES];
+    int textureCount;
+} ResourceManager;
+
+// Resource Manager API
+void ResourceManagerInit(ResourceManager* manager);
+Texture2D ResourceManagerGetTexture(ResourceManager* manager, const char* path);
+void ResourceManagerUnloadAll(ResourceManager* manager);
 
 #endif

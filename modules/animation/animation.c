@@ -1,6 +1,10 @@
+/**
+ * animation.c
+ */
 #include "animation.h"
 #include "string.h"
 #include "stdlib.h"
+#include "resource_manager.h"
 
 #define MAX_ANIMATIONS_IN_DATABASE 500
 #define MAX_ANIMATIONS_PER_ENTITY 20
@@ -15,10 +19,11 @@ typedef struct AnimationDataDir{
 static AnimationDataDir* animationDatabaseDir;
 static int animationsInDatabaseCount;
 
+
 static AnimationDataDir* GetEntityDatabaseRecord(char* entity);
 static DIRECTION GetDirectionEnum(int angleInDegree);
 static AnimationDir* GetAnimationFromRecord(AnimationDataDir* animationData, char* animationName);
-static void SetFrame(Sprite* frame, AnimationFrames* frames);
+static void SetFrame(char* frameDataFrameNumber, AnimationFrames* frames);
 
 
 void AnimationInit(void)
@@ -29,7 +34,7 @@ void AnimationDestroy(void)
 {
     free(animationDatabaseDir);
 }
-void AnimationPushFrame(char* entity, char* frameData, Sprite* sprite)
+void AnimationPushFrame(char* entity, char* frameData)
 {
     AnimationDataDir* ad = GetEntityDatabaseRecord(entity);
 
@@ -42,9 +47,9 @@ void AnimationPushFrame(char* entity, char* frameData, Sprite* sprite)
     DIRECTION dir = GetDirectionEnum(atoi(token));
 
     //check if there is a frame in this direction
-    token = strtok(NULL, "_");
+    token = strtok(NULL, ",");
 
-    SetFrame(sprite, &anim->frames[dir]);
+    SetFrame(token, &anim->frames[dir]);
 }
 AnimationDir* AnimationGetFromDatabase(char* entity, char* animationName)
 {
@@ -88,14 +93,19 @@ static AnimationDir* GetAnimationFromRecord(AnimationDataDir* ad, char* animatio
     strcpy(ad->animations[ad->animationsCount].data.name, animationName);
     return &ad->animations[ad->animationsCount++];
 }
-static void SetFrame(Sprite* frame, AnimationFrames* frames)
+static void SetFrame(char* token, AnimationFrames* frames)
 {
     for (size_t i = 0; i < frames->frameCount; i++)
     {
-        if(strcmp(frames->sprites->name, frame->name) == 0)
+        if(strcmp(frames->sprites[i].name, token) == 0)
         {
             return;
         }
     }
-    frames->sprites[frames->frameCount] = *frame;
+
+    Sprite sprite;
+    strcpy(sprite.name, token);
+    token = strtok(NULL, ",");
+    sprite.origin = (Vector2){};
+    //frames->sprites[frames->frameCount]
 }

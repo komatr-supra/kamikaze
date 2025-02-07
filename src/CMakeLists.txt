@@ -2,5 +2,5 @@
 # main build
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} sprite_module animation_module raylib)
+target_link_libraries(${PROJECT_NAME} animation_module  resource_module sprite_moduleraylib)
 target_include_directories(${PROJECT_NAME} PUBLIC include)

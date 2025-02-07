@@ -12,8 +12,9 @@ int main(void)
 
     Vector2 playerPosition = { (float)screenWidth/2, (float)screenHeight/2 };
 
-
-
+    Texture2D texture = LoadTexture("../resources/characters/knight/knight-0.png");
+    //AnimationPushFrame("knight", "melee2_0_019,knight-0,1,786,62,98,5,60");
+    Ani
     SetTargetFPS(60);
     if(!MapParser(0)){
         TraceLog(LOG_ERROR, "Map Loader Error");

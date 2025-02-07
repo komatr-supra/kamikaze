@@ -43,7 +43,7 @@ typedef struct AnimationDir
 void AnimationInit(void);
 void AnimationDestroy(void);
 // insert frame inside animation format entity:"knight" frameData:"animationName_angle_frameNumber(sprite name)"
-void AnimationPushFrame(char* entity, char* frameData, Sprite* sprite);
+void AnimationPushFrame(char* entity, char* frameData);
 // get animation pointer TODO: do something about char* selection... its bad - maybe hash, enum, ...?
 AnimationDir* AnimationGetFromDatabase(char* entity, char* animationName);
 
