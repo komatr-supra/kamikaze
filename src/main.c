@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "map_manager.h"
+
 #include "animation.h"
 
 int main(void)
