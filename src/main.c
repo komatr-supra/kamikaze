@@ -12,10 +12,13 @@ int main(void)
 
     Vector2 playerPosition = { (float)screenWidth/2, (float)screenHeight/2 };
 
-    //Camera2D camera = { 0 };
-    //camera.offset = (Vector2){800, 600};
-    //camera.target = (Vector2){50, 50};
-    //camera.zoom = 2.0f;
+    Camera2D camera = { 0 };
+    camera.offset = (Vector2){600, 400};
+    camera.target = (Vector2){300, 300};
+    camera.zoom = 2.0f;
+
+    Shader blurrShader = LoadShader(0, "../resources/shaders/blur.fs");
+    SetShaderValue(blurrShader, GetShaderLocation(blurrShader, "resolution"), &((Vector2){1200.0f, 800.0f}), SHADER_UNIFORM_VEC2);
 
     AnimationInit();
     AnimationPushFrame("knight", "melee2_0_019,knight-0,1,786,62,98,5,60");
@@ -37,12 +40,15 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(DARKGREEN);
+            BeginShaderMode(blurrShader);
+            BeginMode2D(camera);
             
-            //BeginMode2D(camera);
+            DrawTexturePro(spr.texture, spr.sourceRect, (Rectangle){300,300, spr.sourceRect.width, spr.sourceRect.height}, spr.origin, 0, WHITE);
             
-            DrawTexturePro(spr.texture, spr.sourceRect, (Rectangle){300,300, spr.sourceRect.width * 2, spr.sourceRect.height * 2}, spr.origin, 0, WHITE);
+            EndMode2D();
+            EndShaderMode();
+            
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
-            //EndMode2D();
         EndDrawing();
     }
 
