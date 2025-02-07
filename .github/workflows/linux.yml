@@ -8,8 +8,8 @@ on:
     branches:
       - main
     paths:
-      - 'src/**' Build when changed src
-      - 'resources/**' Build when changed resources
+      - 'src/**' #Build when changed src
+      - 'resources/**' #Build when changed resources
       - '.github/workflows/linux.yml'
     
 permissions:
