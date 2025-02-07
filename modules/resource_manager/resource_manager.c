@@ -18,7 +18,10 @@ Texture2D ResourceManagerGetTexture(ResourceManager* manager, const char* path) 
 
 static Texture2D ResourceManagerLoadTexture(ResourceManager* manager, const char* path) {
     strcpy(manager->textures[manager->textureCount].path, path);
-    manager->textures[manager->textureCount].texture = LoadTexture(path);
+    //char bufferPath[64] = "../resources/characters/";
+    //manager->textures[manager->textureCount].texture = LoadTexture(path);
+    manager->textures[manager->textureCount].texture = LoadTexture("../resources/characters/knight/knight-0.png");
+
     return manager->textures[manager->textureCount++].texture;
 }
 

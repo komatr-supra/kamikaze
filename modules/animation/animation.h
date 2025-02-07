@@ -8,6 +8,7 @@
 #define ANIMATION_H
 
 #include "sprite.h"
+#include "resource_manager.h"
 
 #define MAX_ANIMATION_FRAMES 15
 

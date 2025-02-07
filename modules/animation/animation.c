@@ -16,9 +16,9 @@ typedef struct AnimationDataDir{
     int animationsCount;
 } AnimationDataDir;
 
-static AnimationDataDir* animationDatabaseDir;
+static AnimationDataDir* animationDatabaseDirs;
 static int animationsInDatabaseCount;
-
+static ResourceManager* resourceManager;
 
 static AnimationDataDir* GetEntityDatabaseRecord(char* entity);
 static DIRECTION GetDirectionEnum(int angleInDegree);
@@ -26,18 +26,21 @@ static AnimationDir* GetAnimationFromRecord(AnimationDataDir* animationData, cha
 static void SetFrame(char* frameDataFrameNumber, AnimationFrames* frames);
 
 
-void AnimationInit(void)
+void AnimationInit()
 {
-    animationDatabaseDir = MemAlloc(sizeof(AnimationDataDir) * MAX_ANIMATIONS_IN_DATABASE);
+    animationDatabaseDirs = MemAlloc(sizeof(AnimationDataDir) * MAX_ANIMATIONS_IN_DATABASE);
+    resourceManager = MemAlloc(sizeof(ResourceManager));
 }
-void AnimationDestroy(void)
+void AnimationDestroy()
 {
-    free(animationDatabaseDir);
+    free(resourceManager);
+    free(animationDatabaseDirs);
 }
-void AnimationPushFrame(char* entity, char* frameData)
+void AnimationPushFrame(char* entity, char* frameDataConst)
 {
     AnimationDataDir* ad = GetEntityDatabaseRecord(entity);
-
+    char frameData[64];
+    strcpy(frameData, frameDataConst);
     // animationDir
     char* token = strtok(frameData, "_");
     AnimationDir* anim = GetAnimationFromRecord(ad, token);
@@ -53,19 +56,33 @@ void AnimationPushFrame(char* entity, char* frameData)
 }
 AnimationDir* AnimationGetFromDatabase(char* entity, char* animationName)
 {
-
+    for (size_t i = 0; i < animationsInDatabaseCount; i++)
+    {
+        if(strcmp(animationDatabaseDirs[i].ownerName, entity) == 0)
+        {
+            for (size_t j = 0; j < animationDatabaseDirs[i].animationsCount; j++)
+            {
+                if(strcmp(animationDatabaseDirs[i].animations[j].data.name, animationName) == 0)
+                {
+                    return &animationDatabaseDirs[i].animations[j];
+                }
+            }
+            
+        }
+    }
+        
 }
 static AnimationDataDir* GetEntityDatabaseRecord(char* entity)
 {
     for (size_t i = 0; i < animationsInDatabaseCount; i++)
     {
-        if(strcmp(animationDatabaseDir[i].ownerName, entity) == 0)
+        if(strcmp(animationDatabaseDirs[i].ownerName, entity) == 0)
         {
-            return &animationDatabaseDir[i];
+            return &animationDatabaseDirs[i];
         }
     }
-    strcpy(animationDatabaseDir[animationsInDatabaseCount].ownerName, entity);
-    return &animationDatabaseDir[animationsInDatabaseCount++];
+    strcpy(animationDatabaseDirs[animationsInDatabaseCount].ownerName, entity);
+    return &animationDatabaseDirs[animationsInDatabaseCount++];
 }
 static DIRECTION GetDirectionEnum(int angleInDegree)
 {
@@ -102,10 +119,17 @@ static void SetFrame(char* token, AnimationFrames* frames)
             return;
         }
     }
-
+    // frame was not found
     Sprite sprite;
     strcpy(sprite.name, token);
+    // texture
     token = strtok(NULL, ",");
-    sprite.origin = (Vector2){};
-    //frames->sprites[frames->frameCount]
+    Texture2D texture = ResourceManagerGetTexture(resourceManager, token);
+    SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
+    sprite.texture = texture;
+    Rectangle rect = {.x = atoi(strtok(NULL, ",")), .y = atoi(strtok(NULL, ",")), .width = atoi(strtok(NULL, ",")), .height = atoi(strtok(NULL, ","))};
+    sprite.sourceRect = rect;
+    sprite.origin.x = atoi(strtok(NULL, ","));
+    sprite.origin.y = atoi(strtok(NULL, ","));
+    frames->sprites[frames->frameCount] = sprite;
 }
