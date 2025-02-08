@@ -1,44 +1,99 @@
 /**
- * animation.c
+ * @file animation.c
+ * @author komatr (NONE_DONKEY@domain.com)
+ * @brief complete system for animation
+ * @version 0.1
+ * @date 08-02-2025
+ * @note only one animation system will be in entire game, need an animator to work
+ * @copyright Copyright (c) 2025
+ * @todo better collections than array, with quicker access
  */
 #include "animation.h"
 #include "string.h"
 #include "stdlib.h"
 #include "resource_manager.h"
 
-#define MAX_ANIMATIONS_IN_DATABASE 500
-#define MAX_ANIMATIONS_PER_ENTITY 20
-#define MAX_OWNER_NAME_LENGHT 32
+#define MAX_ANIMATIONS_IN_DATABASE 500 /**< maximum animations loaded at the same time */
+#define MAX_ANIMATIONS_PER_ENTITY 20 /**< maximum animations per entity */
+#define MAX_OWNER_NAME_LENGHT 32    /**< max lenght of the key value */
 
-typedef struct AnimationDataDir{
-    char ownerName[MAX_OWNER_NAME_LENGHT];
-    AnimationDir animations[MAX_ANIMATIONS_PER_ENTITY];
-    int animationsCount;
-} AnimationDataDir;
+/**
+ * @brief 3D animation record struct, all animation of given object
+ *
+ */
+typedef struct DatabaseRecordAnimationDir{
+    char object[MAX_OWNER_NAME_LENGHT]; /**< same as a key for this record */
+    AnimationDir animations[MAX_ANIMATIONS_PER_ENTITY]; /**< animations of this object - directions only */
+    int animationsCount;    /**< total count of animations of this object */
+} DatabaseRecordAnimationDir;
 
-static AnimationDataDir* animationDatabaseDirs;
-static int animationsInDatabaseCount;
-static ResourceManager* resourceManager;
+#pragma region VARIABLES
+static DatabaseRecordAnimationDir* databaseRecords3D;   /**< 3D animations record collection */
+static int animationsInDatabaseCount;   /**< total animation records */
+static ResourceManagerTexture* resourceManager;    /**< local resource manager */
+#pragma endregion
 
-static AnimationDataDir* GetEntityDatabaseRecord(char* entity);
+#pragma region DECLARATIONS
+
+/**
+ * @brief Get the Entity Database Record object
+ *
+ * @param entity the entity which own returned record
+ * @return DatabaseRecordAnimationDir* pointer to record
+ */
+static DatabaseRecordAnimationDir* GetEntityDatabaseRecord(char* entity);
+
+/**
+ * @brief Transform degrees to one of 8 degrees defined by iso view.
+ *
+ * @param angleInDegree angle of the sprite in degrees - NOT a radiant!
+ * @return DIRECTION enum representation of direction
+ */
 static DIRECTION GetDirectionEnum(int angleInDegree);
-static AnimationDir* GetAnimationFromRecord(AnimationDataDir* animationData, char* animationName);
-static void SetFrame(char* frameDataFrameNumber, AnimationFrames* frames);
 
+/**
+ * @brief Get the 3D Animation From Record
+ *
+ * If there is NOT any record, then it will be created.
+ *
+ * @param animationRecord3D record of 3D animation
+ * @param animationName name of required animation
+ * @todo create collection with better find access time
+ * @return AnimationDir* single animation of given name(key)
+ */
+static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* animationRecord3D, char* animationName);
+
+/**
+ * @brief Set the Frame inside animation
+ *
+ * @param spriteData data about sprite in specific format (animationName_angle_spriteNameID,textureName,xPosOnTexture,yPosOnTexture,width,height,xOrigin,yOrigin)
+ * @param objectFrames single animation data (no direction)
+ */
+static void AddFrame(char* entity, char* spriteData, AnimationFrames* objectFrames);
+
+static DatabaseRecordAnimationDir* CreateRecord(char* entity);
+#pragma endregion
+
+#pragma region API
 
 void AnimationInit()
 {
-    animationDatabaseDirs = MemAlloc(sizeof(AnimationDataDir) * MAX_ANIMATIONS_IN_DATABASE);
-    resourceManager = MemAlloc(sizeof(ResourceManager));
+    databaseRecords3D = MemAlloc(sizeof(DatabaseRecordAnimationDir) * MAX_ANIMATIONS_IN_DATABASE);
+    resourceManager = MemAlloc(sizeof(ResourceManagerTexture));
 }
+
 void AnimationDestroy()
 {
     free(resourceManager);
-    free(animationDatabaseDirs);
+    resourceManager = NULL;
+    free(databaseRecords3D);
+    databaseRecords3D = NULL;
 }
-void AnimationPushFrame(char* entity, char* frameDataConst)
+
+void AnimationPush3DFrame(char* entity, char* frameDataConst)
 {
-    AnimationDataDir* ad = GetEntityDatabaseRecord(entity);
+    DatabaseRecordAnimationDir* ad = GetEntityDatabaseRecord(entity);
+    if(ad == NULL) ad = CreateRecord(entity);
     char frameData[64];
     strcpy(frameData, frameDataConst);
     // animationDir
@@ -52,37 +107,59 @@ void AnimationPushFrame(char* entity, char* frameDataConst)
     //check if there is a frame in this direction
     token = strtok(NULL, ",");
 
-    SetFrame(token, &anim->frames[dir]);
+    AddFrame(entity, token, &anim->frames[dir]);
 }
-AnimationDir* AnimationGetFromDatabase(char* entity, char* animationName)
+
+const AnimationDir* Animation3DGetFromDatabase(char* entity, char* animationName)
 {
     for (size_t i = 0; i < animationsInDatabaseCount; i++)
     {
-        if(strcmp(animationDatabaseDirs[i].ownerName, entity) == 0)
+        if(strcmp(databaseRecords3D[i].object, entity) == 0)
         {
-            for (size_t j = 0; j < animationDatabaseDirs[i].animationsCount; j++)
+            for (size_t j = 0; j < databaseRecords3D[i].animationsCount; j++)
             {
-                if(strcmp(animationDatabaseDirs[i].animations[j].data.name, animationName) == 0)
+                if(strcmp(databaseRecords3D[i].animations[j].data.name, animationName) == 0)
                 {
-                    return &animationDatabaseDirs[i].animations[j];
+                    return &databaseRecords3D[i].animations[j];
                 }
             }
-            
+
         }
     }
-        
+    return NULL;
 }
-static AnimationDataDir* GetEntityDatabaseRecord(char* entity)
+// just for sorting sprites inside animation
+static int CompareFrameNames(const void* a, const void* b)
+{
+    return strcmp(((Sprite*)a)->name, ((Sprite*)b)->name);
+}
+
+void Animation3DSortFrames(char* object)
+{
+    DatabaseRecordAnimationDir* ad = GetEntityDatabaseRecord(object);
+    if(ad == NULL) return;
+    for (size_t i = 0; i < ad->animationsCount; i++)
+    {
+        for (size_t j = 0; j < DIRECTION_COUNT; j++)
+        {
+            qsort(ad->animations[i].frames[j].sprites, ad->animations[i].frames[j].frameCount, sizeof(Sprite), CompareFrameNames);
+        }
+    }
+
+}
+#pragma endregion
+
+#pragma region PRIVATE FNC
+static DatabaseRecordAnimationDir* GetEntityDatabaseRecord(char* entity)
 {
     for (size_t i = 0; i < animationsInDatabaseCount; i++)
     {
-        if(strcmp(animationDatabaseDirs[i].ownerName, entity) == 0)
+        if(strcmp(databaseRecords3D[i].object, entity) == 0)
         {
-            return &animationDatabaseDirs[i];
+            return &databaseRecords3D[i];
         }
     }
-    strcpy(animationDatabaseDirs[animationsInDatabaseCount].ownerName, entity);
-    return &animationDatabaseDirs[animationsInDatabaseCount++];
+    return NULL;
 }
 static DIRECTION GetDirectionEnum(int angleInDegree)
 {
@@ -98,7 +175,7 @@ static DIRECTION GetDirectionEnum(int angleInDegree)
     default: return SOUTH_EAST;
     }
 }
-static AnimationDir* GetAnimationFromRecord(AnimationDataDir* ad, char* animationName)
+static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* ad, char* animationName)
 {
     for (size_t i = 0; i < ad->animationsCount; i++)
     {
@@ -108,10 +185,17 @@ static AnimationDir* GetAnimationFromRecord(AnimationDataDir* ad, char* animatio
         }
     }
     strcpy(ad->animations[ad->animationsCount].data.name, animationName);
+    for (size_t i = 0; i < 8; i++)
+    {
+        ad->animations[ad->animationsCount].frames[i].frameCount = 0;
+    }
+
+
     return &ad->animations[ad->animationsCount++];
 }
-static void SetFrame(char* token, AnimationFrames* frames)
+static void AddFrame(char* entity, char* token, AnimationFrames* frames)
 {
+    // if it exist, just skip
     for (size_t i = 0; i < frames->frameCount; i++)
     {
         if(strcmp(frames->sprites[i].name, token) == 0)
@@ -119,7 +203,8 @@ static void SetFrame(char* token, AnimationFrames* frames)
             return;
         }
     }
-    // frame was not found
+    // create a new one
+
     Sprite sprite;
     strcpy(sprite.name, token);
     // texture
@@ -127,9 +212,20 @@ static void SetFrame(char* token, AnimationFrames* frames)
     Texture2D texture = ResourceManagerGetTexture(resourceManager, token);
     SetTextureFilter(texture, TEXTURE_FILTER_BILINEAR);
     sprite.texture = texture;
+    // rectangle in texture for this sprite
     Rectangle rect = {.x = atoi(strtok(NULL, ",")), .y = atoi(strtok(NULL, ",")), .width = atoi(strtok(NULL, ",")), .height = atoi(strtok(NULL, ","))};
     sprite.sourceRect = rect;
+    // origin of the sprite
     sprite.origin.x = atoi(strtok(NULL, ","));
     sprite.origin.y = atoi(strtok(NULL, ","));
-    frames->sprites[frames->frameCount] = sprite;
+    TraceLog(LOG_INFO, "%s : %d", entity, frames->frameCount);
+    frames->sprites[frames->frameCount++] = sprite;
 }
+
+static DatabaseRecordAnimationDir* CreateRecord(char* entity)
+{
+    strcpy(databaseRecords3D[animationsInDatabaseCount].object, entity);
+    databaseRecords3D[animationsInDatabaseCount].animationsCount = 0;
+    return &databaseRecords3D[animationsInDatabaseCount++];
+}
+#pragma endregion

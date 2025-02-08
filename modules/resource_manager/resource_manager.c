@@ -1,33 +1,60 @@
+/**
+ * @file resource_manager.c
+ * @author komatr (NONE_DONKEY@domain.com)
+ * @brief complete system for resource management to avoid duplication and centralized load/unload management
+ * @version 0.1
+ * @date 06-02-2025
+ *
+ * @copyright Copyright (c) 2025
+ * @todo add other resources as well, like sounds, etc...
+ */
 #include "resource_manager.h"
 #include <string.h>
 
-static Texture2D ResourceManagerLoadTexture(ResourceManager* manager, const char* path);
+#pragma region TEXTURE
+#pragma region DECLARATIONS
+static Texture2D ResourceManagerTextureLoad(ResourceManagerTexture* manager, const char* textureLocation);
+#pragma endregion
 
-void ResourceManagerInit(ResourceManager* manager) {
+#pragma region API
+void ResourceManagerTextureInit(ResourceManagerTexture* manager) {
     manager->textureCount = 0;
 }
 
-Texture2D ResourceManagerGetTexture(ResourceManager* manager, const char* path) {
+Texture2D ResourceManagerGetTexture(ResourceManagerTexture* manager, const char* textureLocation) {
     for (int i = 0; i < manager->textureCount; i++) {
-        if (strcmp(manager->textures[i].path, path) == 0) {
+        if (strcmp(manager->textures[i].path, textureLocation) == 0) {
             return manager->textures[i].texture;
         }
     }
-    return ResourceManagerLoadTexture(manager, path);
+    return ResourceManagerTextureLoad(manager, textureLocation);
 }
 
-static Texture2D ResourceManagerLoadTexture(ResourceManager* manager, const char* path) {
-    strcpy(manager->textures[manager->textureCount].path, path);
-    //char bufferPath[64] = "../resources/characters/";
-    //manager->textures[manager->textureCount].texture = LoadTexture(path);
-    manager->textures[manager->textureCount].texture = LoadTexture("../resources/characters/knight/knight-0.png");
-
-    return manager->textures[manager->textureCount++].texture;
-}
-
-void ResourceManagerUnloadAll(ResourceManager* manager) {
+void ResourceManagerTextureUnloadAll(ResourceManagerTexture* manager) {
     for (int i = 0; i < manager->textureCount; i++) {
         UnloadTexture(manager->textures[i].texture);
     }
     manager->textureCount = 0;
 }
+#pragma endregion
+
+#pragma region PRIVATE FNC
+/**
+ * @brief load a texture and save it inside given manager
+ *
+ * @param manager manager where to load the texture
+ * @param path texture path
+ * @return Texture2D created texture data
+ * @todo complete it
+ */
+static Texture2D ResourceManagerTextureLoad(ResourceManagerTexture* manager, const char* textureLocation) {
+    strcpy(manager->textures[manager->textureCount].path, textureLocation);
+    char bufferPath[64] = "resources/characters/knight/";
+    strcat(bufferPath, textureLocation);
+    strcat(bufferPath, ".png");
+    manager->textures[manager->textureCount].texture = LoadTexture(bufferPath);
+
+    return manager->textures[manager->textureCount++].texture;
+}
+#pragma endregion
+#pragma endregion
