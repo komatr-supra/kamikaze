@@ -11,7 +11,9 @@ int main(void)
     Vector2 playerPosition = { (float)screenWidth/2, (float)screenHeight/2 };
 
     SetTargetFPS(60);
-    if(!MapParser(0)){
+    Map* map;
+    map = MapParser(0, map);
+    if(!map){
         TraceLog(LOG_ERROR, "Map Loader Error");
     }
     while (!WindowShouldClose())
