@@ -14,6 +14,8 @@
 #include "sprite.h"
 #include "resource_manager.h"
 
+#define MAX_ANIMATIONS_PER_ENTITY 20 /**< maximum animations per entity */
+#define MAX_OWNER_NAME_LENGHT 32    /**< max lenght of the key value */
 #define MAX_ANIMATION_FRAMES 16 /**< max animation frames per clip */
 
 /**
@@ -54,6 +56,16 @@ typedef struct AnimationDir
     AnimationFrames frames[DIRECTION_COUNT]; /**< directions for this animation */
 } AnimationDir;
 
+/**
+ * @brief 3D animation record struct, all animation of given object
+ *
+ */
+typedef struct DatabaseRecordAnimationDir{
+    char object[MAX_OWNER_NAME_LENGHT]; /**< same as a key for this record */
+    AnimationDir animations[MAX_ANIMATIONS_PER_ENTITY]; /**< animations of this object - directions only */
+    int animationsCount;    /**< total count of animations of this object */
+} DatabaseRecordAnimationDir;
+
 #pragma endregion
 
 #pragma region DECLARATIONS
@@ -70,25 +82,15 @@ void AnimationInit(void);
 void AnimationDestroy(void);
 
 /**
- * @brief insert a frame at given object
- * @todo sort frames after each insert? maybe before use? just after all loads?, also change string object to some other type?
- * @param object name of the object (this objects will share the animation)
- * @param frameData data from textrurepacker
- * @note frameData format: "animationName_angle_spriteNameID,textureName,xPosOnTexture,yPosOnTexture,width,height,xOrigin,yOrigin" x and y origin are top left corner offset
- */
-void AnimationPush3DFrame(char* object, char* frameData);
-
-// get animation pointer TODO: do something about char* selection... its bad - maybe hash, enum, ...?
-/**
- * @brief get an animation pointer for "3D" animations
+ * @brief Get the Entity Database Record object
  *
- * @param object name of the animated object
- * @param animationName animation, what you want use
- * @return AnimationDir*
+ * @param entity the entity which own returned record
+ * @return DatabaseRecordAnimationDir* pointer to record
  */
-const AnimationDir* Animation3DGetFromDatabase(char* object, char* animationName);
+DatabaseRecordAnimationDir* AnimationGetEntityData(char* entity);
 
-void Animation3DSortFrames(char* object);
+void Animation3DLoadObject(char* object);
+
 #pragma endregion
 
 #endif

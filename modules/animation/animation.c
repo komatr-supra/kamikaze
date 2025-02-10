@@ -14,18 +14,8 @@
 #include "resource_manager.h"
 
 #define MAX_ANIMATIONS_IN_DATABASE 500 /**< maximum animations loaded at the same time */
-#define MAX_ANIMATIONS_PER_ENTITY 20 /**< maximum animations per entity */
-#define MAX_OWNER_NAME_LENGHT 32    /**< max lenght of the key value */
 
-/**
- * @brief 3D animation record struct, all animation of given object
- *
- */
-typedef struct DatabaseRecordAnimationDir{
-    char object[MAX_OWNER_NAME_LENGHT]; /**< same as a key for this record */
-    AnimationDir animations[MAX_ANIMATIONS_PER_ENTITY]; /**< animations of this object - directions only */
-    int animationsCount;    /**< total count of animations of this object */
-} DatabaseRecordAnimationDir;
+
 
 #pragma region VARIABLES
 static DatabaseRecordAnimationDir* databaseRecords3D;   /**< 3D animations record collection */
@@ -34,14 +24,6 @@ static ResourceManagerTexture* resourceManager;    /**< local resource manager *
 #pragma endregion
 
 #pragma region DECLARATIONS
-
-/**
- * @brief Get the Entity Database Record object
- *
- * @param entity the entity which own returned record
- * @return DatabaseRecordAnimationDir* pointer to record
- */
-static DatabaseRecordAnimationDir* GetEntityDatabaseRecord(char* entity);
 
 /**
  * @brief Transform degrees to one of 8 degrees defined by iso view.
@@ -71,7 +53,19 @@ static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* animatio
  */
 static void AddFrame(char* entity, char* spriteData, AnimationFrames* objectFrames);
 
+/// @brief 
+/// @param entity 
+/// @return 
 static DatabaseRecordAnimationDir* CreateRecord(char* entity);
+
+/**
+ * @brief insert a frame at given object
+ * @todo sort frames after each insert? maybe before use? just after all loads?, also change string object to some other type?
+ * @param object name of the object (this objects will share the animation)
+ * @param frameData data from textrurepacker
+ * @note frameData format: "animationName_angle_spriteNameID,textureName,xPosOnTexture,yPosOnTexture,width,height,xOrigin,yOrigin" x and y origin are top left corner offset
+ */
+static void AnimationPush3DFrame(char* object, char* frameData);
 #pragma endregion
 
 #pragma region API
@@ -90,25 +84,25 @@ void AnimationDestroy()
     databaseRecords3D = NULL;
 }
 
-void AnimationPush3DFrame(char* entity, char* frameDataConst)
+DatabaseRecordAnimationDir* AnimationGetEntityData(char* entity)
 {
-    DatabaseRecordAnimationDir* ad = GetEntityDatabaseRecord(entity);
-    if(ad == NULL) ad = CreateRecord(entity);
-    char frameData[64];
-    strcpy(frameData, frameDataConst);
-    // animationDir
-    char* token = strtok(frameData, "_");
-    AnimationDir* anim = GetAnimationFromRecord(ad, token);
-
-    // real direction from frameData
-    token = strtok(NULL, "_");
-    DIRECTION dir = GetDirectionEnum(atoi(token));
-
-    //check if there is a frame in this direction
-    token = strtok(NULL, ",");
-
-    AddFrame(entity, token, &anim->frames[dir]);
+    for (size_t i = 0; i < animationsInDatabaseCount; i++)
+    {
+        if(strcmp(databaseRecords3D[i].object, entity) == 0)
+        {
+            return &databaseRecords3D[i];
+        }
+    }
+    return NULL;
 }
+
+void AnimationLoadCharacter(char* characterName)
+{
+
+}
+#pragma endregion
+
+#pragma region PRIVATE FNC
 
 const AnimationDir* Animation3DGetFromDatabase(char* entity, char* animationName)
 {
@@ -128,39 +122,27 @@ const AnimationDir* Animation3DGetFromDatabase(char* entity, char* animationName
     }
     return NULL;
 }
-// just for sorting sprites inside animation
-static int CompareFrameNames(const void* a, const void* b)
+
+static void AnimationPush3DFrame(char* object, char* frameData)
 {
-    return strcmp(((Sprite*)a)->name, ((Sprite*)b)->name);
+    DatabaseRecordAnimationDir* ad = AnimationGetEntityData(object);
+    if(ad == NULL) ad = CreateRecord(object);
+    char frameDataBuffer[64];
+    strcpy(frameDataBuffer, frameData);
+    // animationDir
+    char* token = strtok(frameDataBuffer, "_");
+    AnimationDir* anim = GetAnimationFromRecord(ad, token);
+
+    // real direction from frameData
+    token = strtok(NULL, "_");
+    DIRECTION dir = GetDirectionEnum(atoi(token));
+
+    //check if there is a frame in this direction
+    token = strtok(NULL, ",");
+
+    AddFrame(object, token, &anim->frames[dir]);
 }
 
-void Animation3DSortFrames(char* object)
-{
-    DatabaseRecordAnimationDir* ad = GetEntityDatabaseRecord(object);
-    if(ad == NULL) return;
-    for (size_t i = 0; i < ad->animationsCount; i++)
-    {
-        for (size_t j = 0; j < DIRECTION_COUNT; j++)
-        {
-            qsort(ad->animations[i].frames[j].sprites, ad->animations[i].frames[j].frameCount, sizeof(Sprite), CompareFrameNames);
-        }
-    }
-
-}
-#pragma endregion
-
-#pragma region PRIVATE FNC
-static DatabaseRecordAnimationDir* GetEntityDatabaseRecord(char* entity)
-{
-    for (size_t i = 0; i < animationsInDatabaseCount; i++)
-    {
-        if(strcmp(databaseRecords3D[i].object, entity) == 0)
-        {
-            return &databaseRecords3D[i];
-        }
-    }
-    return NULL;
-}
 static DIRECTION GetDirectionEnum(int angleInDegree)
 {
     switch (angleInDegree)
@@ -203,8 +185,13 @@ static void AddFrame(char* entity, char* token, AnimationFrames* frames)
             return;
         }
     }
+    // is there a space for a new sprite?
+    if((frames->frameCount + 1) > MAX_ANIMATION_FRAMES)
+    {
+        TraceLog(LOG_ERROR, "no space for sprite in animation");
+        return;
+    }
     // create a new one
-
     Sprite sprite;
     strcpy(sprite.name, token);
     // texture
@@ -219,7 +206,14 @@ static void AddFrame(char* entity, char* token, AnimationFrames* frames)
     sprite.origin.x = atoi(strtok(NULL, ","));
     sprite.origin.y = atoi(strtok(NULL, ","));
     TraceLog(LOG_INFO, "%s : %d", entity, frames->frameCount);
-    frames->sprites[frames->frameCount++] = sprite;
+    // sort it
+    int comparedSpriteIndex = frames->frameCount - 1;
+    while (comparedSpriteIndex >= 0 && strcmp(sprite.name, frames->sprites[comparedSpriteIndex].name) > 0)
+    {
+        frames->sprites[comparedSpriteIndex + 1] = frames->sprites[comparedSpriteIndex--];
+    }
+    // everything is shifted
+    frames->sprites[comparedSpriteIndex + 1] = sprite;
 }
 
 static DatabaseRecordAnimationDir* CreateRecord(char* entity)
