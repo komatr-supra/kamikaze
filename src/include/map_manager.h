@@ -64,31 +64,38 @@ void SkipWhitespace(char **xml) {
     }
 }
 
-char* ResourcePath(char *path) {
+char* ResourcePath(char *path, const char* target) {
     if (path == NULL) {
         return NULL;
     }
 
     const char* replacement = "./resources";
-    const char* target = "..";
     size_t repl_len = strlen(replacement);
     size_t target_len = strlen(target);
 
-    char* result = (char *)malloc(strlen(path) * 2 + 1); // Allocate enough space. (+1 for null terminator)
+    // Create a copy of the path to work with (since we'll modify it)
+    char *path_copy = strdup(path);
+    if (path_copy == NULL) {
+        perror("strdup failed");
+        return NULL; // Or handle memory allocation error appropriately
+    }
+
+    char* result = (char *)malloc(strlen(path_copy) * 2 + 1); // Allocate enough space. (+1 for null terminator)
     if(result == NULL)
     {
         perror("malloc failed");
+        free(path_copy);
         return NULL;
     }
 
-    char* current_pos = path;
+    char* current_pos = path_copy;
     char* write_pos = result;
 
     size_t prefix_len = 0;
     while ((current_pos = strstr(current_pos, target)) != NULL) {
         // Copy everything up to the ".."
-        prefix_len = (current_pos - path)+2;
-        strncpy(write_pos, path, prefix_len);
+        prefix_len = current_pos - path_copy;
+        strncpy(write_pos, path_copy, prefix_len);
         write_pos += prefix_len;
 
         // Copy the replacement string
@@ -97,12 +104,11 @@ char* ResourcePath(char *path) {
 
         // Move past the ".." in the original string
         current_pos += target_len;
-        path = current_pos; // Important: Update path_copy
+        path_copy = current_pos; // Important: Update path_copy
     }
 
     // Copy the remaining part of the string (after the last "..")
-    strcpy(write_pos, path);
-    result[prefix_len] = '\0';
+    strcpy(write_pos, path_copy);
 
     return result;
 }
@@ -128,6 +134,22 @@ bool TilesetParser(Tileset* tileset){
     while ((read = getline(&line, &len, file)) != -1) {
         SkipWhitespace(&line);
         if (isCollectingTile){
+            char* sourceStr = strstr(line, "source=\"");
+            if (sourceStr) {
+                sourceStr += 8;
+                char* sourceEndStr = strchr(sourceStr, '"');
+                if (sourceEndStr) {
+                    size_t sourceLen = sourceEndStr - sourceStr;
+                    if (sourceLen >= MAX_SOURCE_LENGTH) {
+                        fclose(file);
+                        return false;
+                    }
+                    tileset->tilesetTile[currentTileIndex].source = malloc(sourceLen+2);
+                    strncpy(tileset->tilesetTile[currentTileIndex].source, sourceStr, sourceLen);
+                    tileset->tilesetTile[currentTileIndex].source[sourceLen] = '\0';
+                    tileset->tilesetTile[currentTileIndex].source = ResourcePath(tileset->tilesetTile[currentTileIndex].source, "../../../..");
+                }
+            }
 
             isCollectingTile = false;
             currentTileIndex++;
@@ -233,7 +255,7 @@ bool ReadFile(const char filename[], Map* map) {
                         map->tilesets[map->numTilesets].source = malloc(sourceLen+2);
                         strncpy(map->tilesets[map->numTilesets].source, sourceStr, sourceLen);
                         map->tilesets[map->numTilesets].source[sourceLen] = '\0';
-                        map->tilesets[map->numTilesets].source = ResourcePath(map->tilesets[map->numTilesets].source);
+                        map->tilesets[map->numTilesets].source = ResourcePath(map->tilesets[map->numTilesets].source, "..");
                     }
                 }
                 char* firstgidStr = strstr(line, "firstgid=\"");
