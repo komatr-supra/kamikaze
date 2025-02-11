@@ -8,6 +8,7 @@
 // #include <dirent.h> 
 #include <limits.h>
 #include <errno.h>
+#include "raylib.h"
 
 #define MAX_TILESETS 5 // Adjust as needed
 #define MAX_TILESET_TILES 30 // Adjust as needed
@@ -17,14 +18,22 @@
 #define MAX_SOURCE_LENGTH 64 // Adjust as needed
 
 typedef struct TilesetTile {
-    char* source;
+    char* name; // original image name with path, but without extension (”cliffs/cliff2”) => fake folder structure
+    float x; // position on X, where the sprite starts on the texture
+    float y; // position on Y, where the sprite starts on the texture
+    float width; // width of the sprite in texture
+    float height; // height of the sprite in texture
+    float offsetX; // X offset position, relative to original top left - images are trimmed, so we need a original start
+    float offsetY; // Y offset position, relative to original top left - images are trimmed, so we need a original start
     int id;
 } TilesetTile;
 
 typedef struct Tileset {
-    TilesetTile* tilesetTile;
-    char* source;
     char name[MAX_NAME_LENGTH];
+    TilesetTile* tilesetTile;
+    char* tileParent;
+    Texture2D tileTexture;
+    char* source;
     int firstgid;
     int numTilesetTiles;
     int tilecount;
@@ -39,8 +48,8 @@ typedef struct Layer {
 } Layer;
 
 typedef struct Map {
-    Tileset* tilesets;
     Layer layers[MAX_LAYERS];
+    Tileset* tilesets;
     char version[10];
     char renderorder[20];
     int width;
@@ -57,6 +66,8 @@ typedef struct Map {
 * Layer length 48
 * TilesetTile length 16
 **/
+
+
 
 void SkipWhitespace(char **xml) {
     while (isspace((unsigned char)**xml)) {
@@ -112,6 +123,66 @@ char* ResourcePath(char *path, const char* target) {
 
     return result;
 }
+bool TilesetTileParser(TilesetTile* tilesetTile, FILE* file){
+    if(!tilesetTile || !file) return false;
+
+    // Load Tileset
+    char* line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    long fileSize = ftell(file);
+    rewind(file);
+    const char* delimiters = ",";
+
+    while ((read = getline(&line, &len, file)) != -1) {
+        TraceLog(LOG_INFO, TextFormat("%s", line));
+        int infoIndex = 0;
+        char* sourceStr = strstr(line, tilesetTile->name);
+        if (sourceStr) {
+            char* token = strtok(line, delimiters);
+            while (token != NULL) {
+                char *endptr;
+                errno = 0;
+                int num = strtol(token, &endptr, 10);
+                if (endptr != token && errno == 0 && num >= INT_MIN && num <= INT_MAX) {
+                    switch (infoIndex)
+                    {
+                        case 0:
+                            tilesetTile->x = num;
+                            break;
+                        case 1:
+                            tilesetTile->y = num;
+                            break;
+                        case 2:
+                            tilesetTile->width = num;
+                            break;
+                        case 3:
+                            tilesetTile->height = num;
+                            break;
+                        case 4:
+                            tilesetTile->offsetX = num;
+                            break;
+                        case 5:
+                            tilesetTile->offsetY = num;
+                            break;
+                        
+                        default:
+                            break;
+                    }
+                    infoIndex++;
+                }
+
+                token = strtok(NULL, delimiters); // I Dont get it but they say to use it to loop
+            }
+        }
+        if(infoIndex > 0){
+            TraceLog(LOG_INFO, TextFormat("infoIndex: %d", infoIndex));
+        }
+    }
+    return true;
+
+}
 
 bool TilesetParser(Tileset* tileset){
     // Load Tileset
@@ -131,25 +202,29 @@ bool TilesetParser(Tileset* tileset){
     size_t currentTileIndex = 0;
     bool isCollectingTile = false;
     tileset->tilecount = 0;
+    FILE* tilesetFile = NULL;
     while ((read = getline(&line, &len, file)) != -1) {
         SkipWhitespace(&line);
         if (isCollectingTile){
-            char* sourceStr = strstr(line, "source=\"");
+            char* sourceStr = strstr(line, "source=\"../../../../tiled/tilesets/");
             if (sourceStr) {
-                sourceStr += 8;
-                char* sourceEndStr = strchr(sourceStr, '"');
-                if (sourceEndStr) {
-                    size_t sourceLen = sourceEndStr - sourceStr;
-                    if (sourceLen >= MAX_SOURCE_LENGTH) {
+                sourceStr += 35;
+                char* sourceEndStr = strchr(sourceStr, '/');
+                size_t sourceLen = sourceEndStr - sourceStr;
+                sourceStr += sourceLen+1;
+                char* nameEndStr = strchr(sourceStr, '.');
+                size_t nameLen = nameEndStr - sourceStr;
+                if (nameEndStr) {
+                    if (nameLen >= MAX_SOURCE_LENGTH) {
                         fclose(file);
                         return false;
                     }
-                    tileset->tilesetTile[currentTileIndex].source = malloc(sourceLen+2);
-                    strncpy(tileset->tilesetTile[currentTileIndex].source, sourceStr, sourceLen);
-                    tileset->tilesetTile[currentTileIndex].source[sourceLen] = '\0';
-                    tileset->tilesetTile[currentTileIndex].source = ResourcePath(tileset->tilesetTile[currentTileIndex].source, "../../../..");
+                    tileset->tilesetTile[currentTileIndex].name = (char*)malloc(nameLen+2);
+                    strncpy(tileset->tilesetTile[currentTileIndex].name, sourceStr, nameLen);
+                    tileset->tilesetTile[currentTileIndex].name[nameLen] = '\0';
                 }
             }
+            TilesetTileParser(&tileset->tilesetTile[currentTileIndex], tilesetFile);
 
             isCollectingTile = false;
             currentTileIndex++;
@@ -157,12 +232,55 @@ bool TilesetParser(Tileset* tileset){
             char* tilecountStr = strstr(line, "tilecount=\"");
             if (tilecountStr) tileset->tilecount = atoi(tilecountStr + 11);
             tileset->tilesetTile = malloc(sizeof(TilesetTile) * tileset->tilecount);
+            char* sourceStr = strstr(tileset->source, "./resources/tilesets/");
+            if (sourceStr) {
+                sourceStr += 21;
+                char* sourceEndStr = strchr(sourceStr, '/');
+                size_t sourceLen = sourceEndStr - sourceStr;
+                if (sourceEndStr) {
+                    if (sourceLen >= MAX_SOURCE_LENGTH) {
+                        fclose(file);
+                        return false;
+                    }
+                    tileset->tileParent = (char*)malloc(sourceLen+2);
+                    strncpy(tileset->tileParent, sourceStr, sourceLen);
+                    tileset->tileParent[sourceLen] = '\0';
+
+                    const char resourcesPath[] = "./resources";
+                    char* filePath = (char *)malloc(strlen("./resources/tilesets//.tpd")+strlen(tileset->tileParent)+strlen(tileset->tileParent)+1); // Allocate enough space. (+1 for null terminator)
+                    strcpy(filePath, "./resources/tilesets/");
+                    strcat(filePath, tileset->tileParent);
+                    strcat(filePath, "/");
+                    strcat(filePath, tileset->tileParent);
+                    strcat(filePath, ".tpd");
+                    
+                    tilesetFile = fopen(filePath, "r");
+                    if (tilesetFile == NULL){
+                        TraceLog(LOG_ERROR, "File not loaded");
+                        fclose(file);
+                        return false;
+                    }
+                    char* imagePath = (char *)malloc(strlen("./resources/tilesets//.png")+strlen(tileset->tileParent)+strlen(tileset->tileParent)+1);                    strcpy(filePath, "./resources/tilesets/");
+                    strcpy(imagePath, "./resources/tilesets/");
+                    strcat(imagePath, tileset->tileParent);
+                    strcat(imagePath, "/");
+                    strcat(imagePath, tileset->tileParent);
+                    strcat(imagePath, ".png");
+                    Image tileImage = LoadImage(imagePath);
+                    tileset->tileTexture = LoadTextureFromImage(tileImage);
+                    UnloadImage(tileImage);
+                }
+            }
         }else if (strstr(line, "<tile ") && tileset->tilecount != 0) {
             char* idStr = strstr(line, "id=\"");
             if (idStr) tileset->tilesetTile[currentTileIndex].id = atoi(idStr + 4);
             isCollectingTile = true;
         } 
     }
+    if(tilesetFile){
+        fclose(tilesetFile);
+    }
+    fclose(file);
 
     return true;
 }
@@ -323,9 +441,15 @@ void MapFree(Map* map){
             if(map->tilesets[i].source){
                 free(map->tilesets[i].source);
             }
+            // if(map->tilesets[i].tileParent){
+            //     free(map->tilesets[i].tileParent);
+            // }
+            if(map->tilesets[i].tileTexture.id > 0){
+                UnloadTexture(map->tilesets[i].tileTexture);
+            }
             for(int j=0;j<map->tilesets[i].numTilesetTiles;j++){
-                if(map->tilesets[i].tilesetTile[j].source){
-                    free(map->tilesets[i].tilesetTile[j].source);
+                if(map->tilesets[i].tilesetTile[j].name){
+                    free(map->tilesets[i].tilesetTile[j].name);
                 }
             }
         }

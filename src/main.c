@@ -26,6 +26,8 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
+            DrawTextureV(map->tilesets[0].tileTexture, (Vector2){0}, WHITE);
+
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
 
         EndDrawing();
