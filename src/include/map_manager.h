@@ -25,8 +25,8 @@ typedef struct TilesetTile {
 } TilesetTile;
 
 typedef struct Tileset {
-    TilesetTile* tilesetTile;
     Texture2D tileTexture;
+    TilesetTile* tilesetTile;
     char* name;
     char* tileParent;
     char* source;
@@ -46,8 +46,6 @@ typedef struct Layer {
 typedef struct Map {
     Layer layers[MAX_LAYERS];
     Tileset* tilesets;
-    char version[10];
-    char renderorder[20];
     int width;
     int height;
     int tilewidth;
@@ -57,10 +55,10 @@ typedef struct Map {
 } Map;
 /*
 * May change until the final version
-* Map length 544
-* Tileset length 48
-* Layer length 48
-* TilesetTile length 16
+* Map length 352
+* Tileset length 72
+* Layer length 32
+* TilesetTile length 40
 **/
 int GetIntFromString(const char* origin, const char* start){
     char* path_copy = strdup(origin);
@@ -111,14 +109,14 @@ char* ResourcePath(char *path, const char* target) {
     // Create a copy of the path to work with (since we'll modify it)
     char *path_copy = strdup(path);
     if (path_copy == NULL) {
-        perror("strdup failed");
+        TraceLog(LOG_ERROR, "strdup failed");
         return NULL; // Or handle memory allocation error appropriately
     }
 
     char* result = (char *)malloc(strlen(path_copy) * 2 + 1); // Allocate enough space. (+1 for null terminator)
     if(result == NULL)
     {
-        perror("malloc failed");
+        TraceLog(LOG_ERROR, "malloc failed");
         free(path_copy);
         return NULL;
     }
@@ -160,7 +158,6 @@ bool TilesetTileParser(TilesetTile* tilesetTile, FILE* file){
     const char* delimiters = ",";
 
     while ((read = getline(&line, &len, file)) != -1) {
-        TraceLog(LOG_INFO, TextFormat("%s", line));
         int infoIndex = 0;
         char* sourceStr = strstr(line, tilesetTile->name);
         if (sourceStr) {
@@ -199,9 +196,6 @@ bool TilesetTileParser(TilesetTile* tilesetTile, FILE* file){
 
                 token = strtok(NULL, delimiters); // I Dont get it but they say to use it to loop
             }
-        }
-        if(infoIndex > 0){
-            TraceLog(LOG_INFO, TextFormat("infoIndex: %d", infoIndex));
         }
     }
     return true;
