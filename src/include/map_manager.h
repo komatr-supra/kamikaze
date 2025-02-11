@@ -11,11 +11,7 @@
 #include "raylib.h"
 
 #define MAX_TILESETS 5 // Adjust as needed
-#define MAX_TILESET_TILES 30 // Adjust as needed
 #define MAX_LAYERS 10 // Adjust as needed
-#define MAX_TILE_DATA_SIZE 1024 // Adjust as needed
-#define MAX_NAME_LENGTH 20 // Adjust as needed
-#define MAX_SOURCE_LENGTH 64 // Adjust as needed
 
 typedef struct TilesetTile {
     char* name; // original image name with path, but without extension (”cliffs/cliff2”) => fake folder structure
@@ -29,10 +25,10 @@ typedef struct TilesetTile {
 } TilesetTile;
 
 typedef struct Tileset {
-    char name[MAX_NAME_LENGTH];
     TilesetTile* tilesetTile;
-    char* tileParent;
     Texture2D tileTexture;
+    char* name;
+    char* tileParent;
     char* source;
     int firstgid;
     int numTilesetTiles;
@@ -40,7 +36,7 @@ typedef struct Tileset {
 } Tileset;
 
 typedef struct Layer {
-    char name[MAX_NAME_LENGTH];
+    char* name;
     int* data;
     int id;
     int height;
@@ -66,7 +62,35 @@ typedef struct Map {
 * Layer length 48
 * TilesetTile length 16
 **/
+int GetIntFromString(const char* origin, const char* start){
+    char* path_copy = strdup(origin);
+    char* extract = strstr(path_copy, start);
+    int result = 0;
+    if (extract) {
+        result = atoi(extract + strlen(start));
+    }
+    free(path_copy);
+    return result;
+}
 
+char* GetStringFromString(const char* origin, const char* start, const char* end){
+    char* path_copy = strdup(origin);
+    char* result = NULL;
+
+    char* extract = strstr(origin, start);
+    if (extract) {
+        extract += strlen(start);
+        char* endExtract = strchr(extract, *end);
+        if (endExtract) {
+            size_t extractLen = endExtract - extract;
+            result = malloc(extractLen+1);
+            strncpy(result, extract, extractLen);
+            result[extractLen] = '\0';
+        }
+    }
+    free(path_copy);
+    return result;
+}
 
 
 void SkipWhitespace(char **xml) {
@@ -206,74 +230,43 @@ bool TilesetParser(Tileset* tileset){
     while ((read = getline(&line, &len, file)) != -1) {
         SkipWhitespace(&line);
         if (isCollectingTile){
-            char* sourceStr = strstr(line, "source=\"../../../../tiled/tilesets/");
-            if (sourceStr) {
-                sourceStr += 35;
-                char* sourceEndStr = strchr(sourceStr, '/');
-                size_t sourceLen = sourceEndStr - sourceStr;
-                sourceStr += sourceLen+1;
-                char* nameEndStr = strchr(sourceStr, '.');
-                size_t nameLen = nameEndStr - sourceStr;
-                if (nameEndStr) {
-                    if (nameLen >= MAX_SOURCE_LENGTH) {
-                        fclose(file);
-                        return false;
-                    }
-                    tileset->tilesetTile[currentTileIndex].name = (char*)malloc(nameLen+2);
-                    strncpy(tileset->tilesetTile[currentTileIndex].name, sourceStr, nameLen);
-                    tileset->tilesetTile[currentTileIndex].name[nameLen] = '\0';
-                }
-            }
+            tileset->tilesetTile[currentTileIndex].name = GetStringFromString(line, "source=\"../../../../tiled/tilesets/", "/");
             TilesetTileParser(&tileset->tilesetTile[currentTileIndex], tilesetFile);
 
             isCollectingTile = false;
             currentTileIndex++;
         }else if(strstr(line, "<tileset ")){
-            char* tilecountStr = strstr(line, "tilecount=\"");
-            if (tilecountStr) tileset->tilecount = atoi(tilecountStr + 11);
+            tileset->tilecount = GetIntFromString(line, "tilecount=\"");
             tileset->tilesetTile = malloc(sizeof(TilesetTile) * tileset->tilecount);
-            char* sourceStr = strstr(tileset->source, "./resources/tilesets/");
-            if (sourceStr) {
-                sourceStr += 21;
-                char* sourceEndStr = strchr(sourceStr, '/');
-                size_t sourceLen = sourceEndStr - sourceStr;
-                if (sourceEndStr) {
-                    if (sourceLen >= MAX_SOURCE_LENGTH) {
-                        fclose(file);
-                        return false;
-                    }
-                    tileset->tileParent = (char*)malloc(sourceLen+2);
-                    strncpy(tileset->tileParent, sourceStr, sourceLen);
-                    tileset->tileParent[sourceLen] = '\0';
-
-                    const char resourcesPath[] = "./resources";
-                    char* filePath = (char *)malloc(strlen("./resources/tilesets//.tpd")+strlen(tileset->tileParent)+strlen(tileset->tileParent)+1); // Allocate enough space. (+1 for null terminator)
-                    strcpy(filePath, "./resources/tilesets/");
-                    strcat(filePath, tileset->tileParent);
-                    strcat(filePath, "/");
-                    strcat(filePath, tileset->tileParent);
-                    strcat(filePath, ".tpd");
-                    
-                    tilesetFile = fopen(filePath, "r");
-                    if (tilesetFile == NULL){
-                        TraceLog(LOG_ERROR, "File not loaded");
-                        fclose(file);
-                        return false;
-                    }
-                    char* imagePath = (char *)malloc(strlen("./resources/tilesets//.png")+strlen(tileset->tileParent)+strlen(tileset->tileParent)+1);                    strcpy(filePath, "./resources/tilesets/");
-                    strcpy(imagePath, "./resources/tilesets/");
-                    strcat(imagePath, tileset->tileParent);
-                    strcat(imagePath, "/");
-                    strcat(imagePath, tileset->tileParent);
-                    strcat(imagePath, ".png");
-                    Image tileImage = LoadImage(imagePath);
-                    tileset->tileTexture = LoadTextureFromImage(tileImage);
-                    UnloadImage(tileImage);
+            tileset->tileParent = GetStringFromString(tileset->source, "./resources/tilesets/", "/");
+            // TODO: Change it to a better implementation later
+            if (tileset->tileParent) {
+                const char resourcesPath[] = "./resources";
+                char* filePath = (char *)malloc(strlen("./resources/tilesets//.tpd")+strlen(tileset->tileParent)+strlen(tileset->tileParent)+1); // Allocate enough space. (+1 for null terminator)
+                strcpy(filePath, "./resources/tilesets/");
+                strcat(filePath, tileset->tileParent);
+                strcat(filePath, "/");
+                strcat(filePath, tileset->tileParent);
+                strcat(filePath, ".tpd");
+                
+                tilesetFile = fopen(filePath, "r");
+                if (tilesetFile == NULL){
+                    TraceLog(LOG_ERROR, "File not loaded");
+                    fclose(file);
+                    return false;
                 }
+                char* imagePath = (char *)malloc(strlen("./resources/tilesets//.png")+strlen(tileset->tileParent)+strlen(tileset->tileParent)+1);                    strcpy(filePath, "./resources/tilesets/");
+                strcpy(imagePath, "./resources/tilesets/");
+                strcat(imagePath, tileset->tileParent);
+                strcat(imagePath, "/");
+                strcat(imagePath, tileset->tileParent);
+                strcat(imagePath, ".png");
+                Image tileImage = LoadImage(imagePath);
+                tileset->tileTexture = LoadTextureFromImage(tileImage);
+                UnloadImage(tileImage);
             }
         }else if (strstr(line, "<tile ") && tileset->tilecount != 0) {
-            char* idStr = strstr(line, "id=\"");
-            if (idStr) tileset->tilesetTile[currentTileIndex].id = atoi(idStr + 4);
+            tileset->tilesetTile[currentTileIndex].id = GetIntFromString(line, "id=\"");
             isCollectingTile = true;
         } 
     }
@@ -346,64 +339,27 @@ bool ReadFile(const char filename[], Map* map) {
                 }
             }
         }else if (strstr(line, "<map")) {
-            char* widthStr = strstr(line, "width=\"");
-            if (widthStr) map->width = atoi(widthStr + 7);
-            char* heightStr = strstr(line, "height=\"");
-            if (heightStr) 
-                map->height = atoi(heightStr + 8);
-            char* tilewidthStr = strstr(line, "tilewidth=\"");
-            if (tilewidthStr) 
-                map->tilewidth = atoi(tilewidthStr + 11);
-            char* tileheightStr = strstr(line, "tileheight=\"");
-            if (tileheightStr) 
-                map->tileheight = atoi(tileheightStr + 12);
+            map->width = GetIntFromString(line, "width=\"");
+            map->height = GetIntFromString(line, "height=\"");
+            map->tilewidth = GetIntFromString(line, "tilewidth=\"");
+            map->tileheight = GetIntFromString(line, "tileheight=\"");
         } else if (strstr(line, "<tileset")) {
             // Parse tileset attributes (source, firstgid)
             if (map->numTilesets < MAX_TILESETS) {
-                char* sourceStr = strstr(line, "source=\"");
-                if (sourceStr) {
-                    sourceStr += 8;
-                    char* sourceEndStr = strchr(sourceStr, '"');
-                    if (sourceEndStr) {
-                        size_t sourceLen = sourceEndStr - sourceStr;
-                        if (sourceLen >= MAX_SOURCE_LENGTH) {
-                            fclose(file);
-                            return false;
-                        }
-                        map->tilesets[map->numTilesets].source = malloc(sourceLen+2);
-                        strncpy(map->tilesets[map->numTilesets].source, sourceStr, sourceLen);
-                        map->tilesets[map->numTilesets].source[sourceLen] = '\0';
-                        map->tilesets[map->numTilesets].source = ResourcePath(map->tilesets[map->numTilesets].source, "..");
-                    }
-                }
-                char* firstgidStr = strstr(line, "firstgid=\"");
-                if (firstgidStr) map->tilesets[map->numTilesets].firstgid = atoi(firstgidStr + 10);
+                map->tilesets[map->numTilesets].source = GetStringFromString(line, "source=\"", "\"");
+                map->tilesets[map->numTilesets].source = ResourcePath(map->tilesets[map->numTilesets].source, "..");
+                map->tilesets[map->numTilesets].firstgid = GetIntFromString(line, "firstgid=\"");
                 TilesetParser(&map->tilesets[map->numTilesets]);
                 map->numTilesets++;
             }
         } else if (strstr(line, "<layer")) {
             // Parse layer attributes (name, id, width, height)
             if (map->numLayers < MAX_LAYERS) {
-                char* idStr = strstr(line, "id=\"");
-                if (idStr) map->layers[map->numLayers].id = atoi(idStr + 4);
-                char* nameStr = strstr(line, "name=\"");
-                if (nameStr){
-                    nameStr += 6;
-                    char* nameEndStr = strchr(nameStr, '"');
-                    if (nameEndStr) {
-                        size_t nameLen = nameEndStr - nameStr;
-                        if (nameLen >= MAX_NAME_LENGTH) {
-                            TraceLog(LOG_ERROR, TextFormat("Error: Layer name is too long (max %d characters).\n", MAX_NAME_LENGTH - 1));
-                            fclose(file);
-                            return false;
-                        }
-                        strncpy(map->layers[map->numLayers].name, nameStr, nameLen);
-                    }
-                }
-                char* widthStr = strstr(line, "width=\"");
-                if (widthStr) map->layers[map->numLayers].width = atoi(widthStr + 7);
-                char* heightStr = strstr(line, "height=\"");
-                if (heightStr) map->layers[map->numLayers].height = atoi(heightStr + 8);
+                map->layers[map->numLayers].id = GetIntFromString(line, "id=\"");
+                map->layers[map->numLayers].name = GetStringFromString(line, "name=\"", "\"");
+                map->layers[map->numLayers].width = GetIntFromString(line, "width=\"");
+                map->layers[map->numLayers].height = GetIntFromString(line, "height=\"");
+
                 // Alloc array by layer size
                 maxCurrentDataSize = map->layers[map->numLayers].width * map->layers[map->numLayers].height * sizeof(int);
                 map->layers[map->numLayers].data = NULL;
