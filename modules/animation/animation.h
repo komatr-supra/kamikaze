@@ -89,7 +89,7 @@ void AnimationDestroy(void);
  */
 DatabaseRecordAnimationDir* AnimationGetEntityData(char* entity);
 
-void Animation3DLoadObject(char* object);
+void AnimationLoadCharacter(char* characterName);
 
 #pragma endregion
 

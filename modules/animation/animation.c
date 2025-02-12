@@ -12,6 +12,7 @@
 #include "string.h"
 #include "stdlib.h"
 #include "resource_manager.h"
+#include <stdio.h>
 
 #define MAX_ANIMATIONS_IN_DATABASE 500 /**< maximum animations loaded at the same time */
 
@@ -98,7 +99,25 @@ DatabaseRecordAnimationDir* AnimationGetEntityData(char* entity)
 
 void AnimationLoadCharacter(char* characterName)
 {
-
+    char buffer[128] = "resources/characters/";
+    strcat(buffer, characterName);
+    strcat(buffer, "/");
+    strcat(buffer, characterName);
+    strcat(buffer, ".txt");
+    FILE* f_character = fopen(buffer, "r");
+    if(f_character == NULL)
+    {
+        TraceLog(LOG_ERROR, "character file cant be opened: %s", buffer);
+        exit(EXIT_FAILURE);
+    }
+    char* line = NULL;
+    size_t size = 0;
+    while (getline(&line, &size, f_character) != -1)
+    {
+        AnimationPush3DFrame(characterName, line);
+    }    
+    free(line);
+    fclose(f_character);
 }
 #pragma endregion
 
@@ -206,14 +225,14 @@ static void AddFrame(char* entity, char* token, AnimationFrames* frames)
     sprite.origin.x = atoi(strtok(NULL, ","));
     sprite.origin.y = atoi(strtok(NULL, ","));
     TraceLog(LOG_INFO, "%s : %d", entity, frames->frameCount);
-    // sort it
     int comparedSpriteIndex = frames->frameCount - 1;
-    while (comparedSpriteIndex >= 0 && strcmp(sprite.name, frames->sprites[comparedSpriteIndex].name) > 0)
+    while (comparedSpriteIndex >= 0 && strcmp(frames->sprites[comparedSpriteIndex].name, sprite.name) > 0)
     {
-        frames->sprites[comparedSpriteIndex + 1] = frames->sprites[comparedSpriteIndex--];
+        frames->sprites[comparedSpriteIndex + 1] = frames->sprites[comparedSpriteIndex];
+        comparedSpriteIndex--;
     }
-    // everything is shifted
     frames->sprites[comparedSpriteIndex + 1] = sprite;
+    frames->frameCount++;
 }
 
 static DatabaseRecordAnimationDir* CreateRecord(char* entity)

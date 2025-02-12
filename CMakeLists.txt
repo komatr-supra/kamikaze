@@ -5,6 +5,8 @@ project(kamikaze LANGUAGES C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # to prevent create function instead of calling it(can be invisible for compiler and then he can create a new one) X
 add_compile_options(-Wimplicit-function-declaration)
 
