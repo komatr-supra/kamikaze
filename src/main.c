@@ -11,7 +11,9 @@ int main(void)
     Vector2 playerPosition = { (float)screenWidth/2, (float)screenHeight/2 };
 
     SetTargetFPS(60);
-    if(!MapParser(0)){
+    Map* map;
+    map = MapParser(0, map);
+    if(!map){
         TraceLog(LOG_ERROR, "Map Loader Error");
     }
     while (!WindowShouldClose())
@@ -24,10 +26,14 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
+            DrawTextureV(map->tilesets[0].tileTexture, (Vector2){0}, WHITE);
+
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
 
         EndDrawing();
     }
+
+    MapFree(map);
 
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
