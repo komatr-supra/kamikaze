@@ -22,27 +22,6 @@ int main(void)
     Shader blurrShader = LoadShader(0, "resources/shaders/blur.fs");
     SetShaderValue(blurrShader, GetShaderLocation(blurrShader, "resolution"), &((Vector2){1200.0f, 800.0f}), SHADER_UNIFORM_VEC2);
 
-
-    // animation test
-    AnimationInit();
-    FILE* f_animData = fopen("resources/characters/knight/knight.txt", "r");
-    if(f_animData == NULL)
-    {
-        TraceLog(LOG_ERROR, "cant open file");
-        exit(EXIT_FAILURE);
-    }
-    char bufferLine[128];
-    while (fgets(bufferLine, sizeof(bufferLine), f_animData))
-    {
-        AnimationPush3DFrame("knight", bufferLine);
-    }
-    Animation3DSortFrames("knight");
-    const AnimationDir* anim = Animation3DGetFromDatabase("knight", "melee2");
-    int currentFrame = 0;
-    float frameDuration = 0.1f;
-    float timePassed = 0;
-    DIRECTION dir = EAST;
-
     SetTargetFPS(60);
     Map* map;
     map = MapParser(0, map);
@@ -51,13 +30,6 @@ int main(void)
     }
     while (!WindowShouldClose())
     {
-        timePassed += GetFrameTime();
-        if(timePassed > frameDuration)
-        {
-            timePassed = 0;
-            currentFrame++;
-            if(currentFrame >= anim->frames->frameCount) currentFrame = 0;
-        }
 
 
         if (IsKeyDown(KEY_RIGHT)) playerPosition.x += 2.0f;
@@ -65,9 +37,6 @@ int main(void)
         if (IsKeyDown(KEY_UP)) playerPosition.y -= 2.0f;
         if (IsKeyDown(KEY_DOWN)) playerPosition.y += 2.0f;
 
-
-        Sprite spr = anim->frames[dir].sprites[currentFrame];
-        SetTextureFilter(spr.texture, TEXTURE_FILTER_BILINEAR);
         BeginDrawing();
 
             ClearBackground(DARKGREEN);
