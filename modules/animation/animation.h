@@ -86,10 +86,14 @@ void AnimationDestroy(void);
  * @brief Get the Animation Database Record object
  *
  * @param characterName the character which own returned record
- * @return DatabaseRecordAnimationDir* pointer to record
+ * @return DatabaseRecordAnimationDir* pointer to record or NULL
  */
-DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName);
+const DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName);
 
+/// @brief get specific animation
+/// @param animationCollection animation record of given character
+/// @param animationName name of the animation
+/// @return animation data or NULL
 const AnimationDir* Animation3DGetAnimation(DatabaseRecordAnimationDir* animationCollection, char* animationName);
 // ------------------------------
 

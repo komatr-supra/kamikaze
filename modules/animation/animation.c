@@ -87,7 +87,7 @@ void AnimationDestroy()
     databaseRecords3D = NULL;
 }
 
-DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName)
+const DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName)
 {
 
     for (int i = 0; i < animationsInDatabaseCount; i++)
