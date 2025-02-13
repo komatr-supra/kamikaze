@@ -15,18 +15,18 @@
 #include <stdio.h>
 
 #define MAX_ANIMATIONS_IN_DATABASE 500 /**< maximum animations loaded at the same time */
+#define ANIMATION_SPEED_DEFAULT 1/60.0f
 
 
-
-#pragma region VARIABLES
+// ------------------------------ region VARIABLES
 static DatabaseRecordAnimationDir* databaseRecords3D;   /**< 3D animations record collection */
 static int animationsInDatabaseCount;   /**< total animation records */
 static ResourceManagerTexture* resourceManager;    /**< local resource manager */
-#pragma endregion
+// ------------------------------ endregion
 
-#pragma region DECLARATIONS
+// ------------------------------ region DECLARATIONS
 
-bool AnimationLoadCharacter(char* characterName);
+DatabaseRecordAnimationDir* AnimationLoadCharacter(char* characterName);
 
 /**
  * @brief Transform degrees to one of 8 degrees defined by iso view.
@@ -56,22 +56,22 @@ static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* animatio
  */
 static void AddFrame(char* entity, char* spriteData, AnimationFrames* objectFrames);
 
-/// @brief 
-/// @param entity 
-/// @return 
+/// @brief
+/// @param entity
+/// @return
 static DatabaseRecordAnimationDir* CreateRecord(char* entity);
 
 /**
  * @brief insert a frame at given object
  * @todo sort frames after each insert? maybe before use? just after all loads?, also change string object to some other type?
- * @param object name of the object (this objects will share the animation)
+ * @param ad animation databese, where to put a frame
  * @param frameData data from textrurepacker
  * @note frameData format: "animationName_angle_spriteNameID,textureName,xPosOnTexture,yPosOnTexture,width,height,xOrigin,yOrigin" x and y origin are top left corner offset
  */
-static void AnimationPush3DFrame(char* object, char* frameData);
-#pragma endregion
+static void AnimationPush3DFrame(DatabaseRecordAnimationDir* ad, char* frameData);
+// ------------------------------ endregion
 
-#pragma region API
+// ------------------------------ region API
 
 void AnimationInit()
 {
@@ -89,7 +89,7 @@ void AnimationDestroy()
 
 DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName)
 {
-    
+
     for (int i = 0; i < animationsInDatabaseCount; i++)
     {
         if(strcmp(databaseRecords3D[i].object, characterName) == 0)
@@ -97,16 +97,26 @@ DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName)
             return &databaseRecords3D[i];
         }
     }
-    if(AnimationLoadCharacter(characterName) == false) return NULL;
-    return &databaseRecords3D[animationsInDatabaseCount];
+    return AnimationLoadCharacter(characterName);
 }
 
+const AnimationDir* Animation3DGetAnimation(DatabaseRecordAnimationDir* animationCollection, char* animationName)
+{
+    for (size_t i = 0; i < animationCollection->animationsCount; i++)
+    {
+        if(strcmp(animationCollection->animations[i].data.name, animationName) == 0)
+        {
+            return &animationCollection->animations[i];
+        }
+    }
+    return NULL;
+}
 
-#pragma endregion
+// ------------------------------ endregion
 
-#pragma region PRIVATE FNC
+// ------------------------------ region PRIVATE FNC
 
-bool AnimationLoadCharacter(char* characterName)
+DatabaseRecordAnimationDir* AnimationLoadCharacter(char* characterName)
 {
     char buffer[128] = "resources/characters/";
     strcat(buffer, characterName);
@@ -117,42 +127,22 @@ bool AnimationLoadCharacter(char* characterName)
     if(f_character == NULL)
     {
         TraceLog(LOG_ERROR, "character file cant be opened: %s", buffer);
-        return false;
+        return NULL;
     }
+    DatabaseRecordAnimationDir* ad = CreateRecord(characterName);
     char* line = NULL;
     size_t size = 0;
     while (getline(&line, &size, f_character) != -1)
     {
-        AnimationPush3DFrame(characterName, line);
-    }    
+        AnimationPush3DFrame(ad, line);
+    }
     free(line);
     fclose(f_character);
-    return true;
+    return ad;
 }
 
-const AnimationDir* Animation3DGetFromDatabase(char* entity, char* animationName)
+static void AnimationPush3DFrame(DatabaseRecordAnimationDir* ad, char* frameData)
 {
-    for (size_t i = 0; i < animationsInDatabaseCount; i++)
-    {
-        if(strcmp(databaseRecords3D[i].object, entity) == 0)
-        {
-            for (size_t j = 0; j < databaseRecords3D[i].animationsCount; j++)
-            {
-                if(strcmp(databaseRecords3D[i].animations[j].data.name, animationName) == 0)
-                {
-                    return &databaseRecords3D[i].animations[j];
-                }
-            }
-
-        }
-    }
-    return NULL;
-}
-
-static void AnimationPush3DFrame(char* object, char* frameData)
-{
-    DatabaseRecordAnimationDir* ad = AnimationGetCharacterData(object);
-    if(ad == NULL) ad = CreateRecord(object);
     char frameDataBuffer[64];
     strcpy(frameDataBuffer, frameData);
     // animationDir
@@ -166,7 +156,7 @@ static void AnimationPush3DFrame(char* object, char* frameData)
     //check if there is a frame in this direction
     token = strtok(NULL, ",");
 
-    AddFrame(object, token, &anim->frames[dir]);
+    AddFrame(ad->object, token, &anim->frames[dir]);
 }
 
 static DIRECTION GetDirectionEnum(int angleInDegree)
@@ -193,7 +183,7 @@ static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* ad, char
         }
     }
     strcpy(ad->animations[ad->animationsCount].data.name, animationName);
-    ad->animations[ad->animationsCount].data.speed = 1 / 60.0f;
+    ad->animations[ad->animationsCount].data.speed = ANIMATION_SPEED_DEFAULT;
     for (size_t i = 0; i < 8; i++)
     {
         ad->animations[ad->animationsCount].frames[i].frameCount = 0;
@@ -232,7 +222,7 @@ static void AddFrame(char* entity, char* token, AnimationFrames* frames)
     // origin of the sprite
     sprite.origin.x = atoi(strtok(NULL, ","));
     sprite.origin.y = atoi(strtok(NULL, ","));
-    TraceLog(LOG_INFO, "%s : %d", entity, frames->frameCount);
+    //TraceLog(LOG_INFO, "%s : %d", entity, frames->frameCount);
     int comparedSpriteIndex = frames->frameCount - 1;
     while (comparedSpriteIndex >= 0 && strcmp(frames->sprites[comparedSpriteIndex].name, sprite.name) > 0)
     {
@@ -249,4 +239,4 @@ static DatabaseRecordAnimationDir* CreateRecord(char* entity)
     databaseRecords3D[animationsInDatabaseCount].animationsCount = 0;
     return &databaseRecords3D[animationsInDatabaseCount++];
 }
-#pragma endregion
+// ------------------------------ endregion

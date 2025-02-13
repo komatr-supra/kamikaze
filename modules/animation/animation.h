@@ -26,7 +26,7 @@ typedef enum DIRECTION{
     EAST, NORTH_EAST, NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, DIRECTION_COUNT
 } DIRECTION;
 
-#pragma region STRUCTURES
+// ------------------------------region STRUCTURES
 
 /**
  * @brief structure with base values used in each animation
@@ -67,9 +67,9 @@ typedef struct DatabaseRecordAnimationDir{
     int animationsCount;    /**< total count of animations of this object */
 } DatabaseRecordAnimationDir;
 
-#pragma endregion
+// ------------------------------ endregion
 
-#pragma region DECLARATIONS
+// ------------------------------ region DECLARATIONS
 /**
  * @brief initialize animation system, ONLY ONE animation system exist at given time
  * @warning this will allocate a space on the HEAP - don't forget to call AnimationDestroy()
@@ -89,6 +89,8 @@ void AnimationDestroy(void);
  * @return DatabaseRecordAnimationDir* pointer to record
  */
 DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName);
-#pragma endregion
+
+const AnimationDir* Animation3DGetAnimation(DatabaseRecordAnimationDir* animationCollection, char* animationName);
+// ------------------------------
 
 #endif
