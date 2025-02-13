@@ -4,6 +4,23 @@
 #include "raylib.h"
 #include "map_manager.h"
 #include "animation.h"
+#include "timer.h"
+
+void TimerTestPrintOneTime(void)
+{
+    TraceLog(LOG_INFO, "one time timer");
+}
+
+void TimerTestPrintRepeat(void)
+{
+    TraceLog(LOG_INFO, "repeated timer");
+
+}
+
+void TimerTestPrintTimes(void)
+{
+    TraceLog(LOG_INFO, "times timer");
+}
 
 int main(void)
 {
@@ -19,18 +36,18 @@ int main(void)
     camera.target = (Vector2){300, 300};
     camera.zoom = 2.0f;
 
-    Shader blurrShader = LoadShader(0, "resources/shaders/blur.fs");
-    SetShaderValue(blurrShader, GetShaderLocation(blurrShader, "resolution"), &((Vector2){1200.0f, 800.0f}), SHADER_UNIFORM_VEC2);
-
     SetTargetFPS(60);
-    Map* map;
-    map = MapParser(0, map);
-    if(!map){
-        TraceLog(LOG_ERROR, "Map Loader Error");
-    }
+
+    //timer tests
+    TimerSet(5.0f, TimerTestPrintOneTime, 1);
+    TimerSet(2.0f, TimerTestPrintRepeat, -1);
+    TimerSet(4.0f, TimerTestPrintTimes, 10);
+
+
+
     while (!WindowShouldClose())
     {
-
+        TimersTicks(GetFrameTime());
 
         if (IsKeyDown(KEY_RIGHT)) playerPosition.x += 2.0f;
         if (IsKeyDown(KEY_LEFT)) playerPosition.x -= 2.0f;
@@ -40,16 +57,12 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(DARKGREEN);
-            BeginShaderMode(blurrShader);
             BeginMode2D(camera);
-
-            DrawTextureV(map->tilesets[0].tileTexture, (Vector2){0}, WHITE);
 
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
         EndDrawing();
     }
 
-    MapFree(map);
 
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
