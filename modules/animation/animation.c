@@ -26,6 +26,8 @@ static ResourceManagerTexture* resourceManager;    /**< local resource manager *
 
 #pragma region DECLARATIONS
 
+bool AnimationLoadCharacter(char* characterName);
+
 /**
  * @brief Transform degrees to one of 8 degrees defined by iso view.
  *
@@ -85,19 +87,26 @@ void AnimationDestroy()
     databaseRecords3D = NULL;
 }
 
-DatabaseRecordAnimationDir* AnimationGetEntityData(char* entity)
+DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName)
 {
-    for (size_t i = 0; i < animationsInDatabaseCount; i++)
+    
+    for (int i = 0; i < animationsInDatabaseCount; i++)
     {
-        if(strcmp(databaseRecords3D[i].object, entity) == 0)
+        if(strcmp(databaseRecords3D[i].object, characterName) == 0)
         {
             return &databaseRecords3D[i];
         }
     }
-    return NULL;
+    if(AnimationLoadCharacter(characterName) == false) return NULL;
+    return &databaseRecords3D[animationsInDatabaseCount];
 }
 
-void AnimationLoadCharacter(char* characterName)
+
+#pragma endregion
+
+#pragma region PRIVATE FNC
+
+bool AnimationLoadCharacter(char* characterName)
 {
     char buffer[128] = "resources/characters/";
     strcat(buffer, characterName);
@@ -108,7 +117,7 @@ void AnimationLoadCharacter(char* characterName)
     if(f_character == NULL)
     {
         TraceLog(LOG_ERROR, "character file cant be opened: %s", buffer);
-        exit(EXIT_FAILURE);
+        return false;
     }
     char* line = NULL;
     size_t size = 0;
@@ -118,10 +127,8 @@ void AnimationLoadCharacter(char* characterName)
     }    
     free(line);
     fclose(f_character);
+    return true;
 }
-#pragma endregion
-
-#pragma region PRIVATE FNC
 
 const AnimationDir* Animation3DGetFromDatabase(char* entity, char* animationName)
 {
@@ -144,7 +151,7 @@ const AnimationDir* Animation3DGetFromDatabase(char* entity, char* animationName
 
 static void AnimationPush3DFrame(char* object, char* frameData)
 {
-    DatabaseRecordAnimationDir* ad = AnimationGetEntityData(object);
+    DatabaseRecordAnimationDir* ad = AnimationGetCharacterData(object);
     if(ad == NULL) ad = CreateRecord(object);
     char frameDataBuffer[64];
     strcpy(frameDataBuffer, frameData);
@@ -186,6 +193,7 @@ static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* ad, char
         }
     }
     strcpy(ad->animations[ad->animationsCount].data.name, animationName);
+    ad->animations[ad->animationsCount].data.speed = 1 / 60.0f;
     for (size_t i = 0; i < 8; i++)
     {
         ad->animations[ad->animationsCount].frames[i].frameCount = 0;

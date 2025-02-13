@@ -34,6 +34,7 @@ typedef enum DIRECTION{
 typedef struct AnimationBaseData
 {
     char name[32]; /**< name as ID */
+    float speed;
 } AnimationBaseData;
 
 /**
@@ -82,15 +83,12 @@ void AnimationInit(void);
 void AnimationDestroy(void);
 
 /**
- * @brief Get the Entity Database Record object
+ * @brief Get the Animation Database Record object
  *
- * @param entity the entity which own returned record
+ * @param characterName the character which own returned record
  * @return DatabaseRecordAnimationDir* pointer to record
  */
-DatabaseRecordAnimationDir* AnimationGetEntityData(char* entity);
-
-void AnimationLoadCharacter(char* characterName);
-
+DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName);
 #pragma endregion
 
 #endif
