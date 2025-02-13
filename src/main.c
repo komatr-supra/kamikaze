@@ -44,9 +44,11 @@ int main(void)
     DIRECTION dir = EAST;
 
     SetTargetFPS(60);
-    //if(!MapParser(0)){
-    //    TraceLog(LOG_ERROR, "Map Loader Error");
-    //}
+    Map* map;
+    map = MapParser(0, map);
+    if(!map){
+        TraceLog(LOG_ERROR, "Map Loader Error");
+    }
     while (!WindowShouldClose())
     {
         timePassed += GetFrameTime();
@@ -72,16 +74,14 @@ int main(void)
             BeginShaderMode(blurrShader);
             BeginMode2D(camera);
 
-            DrawTexturePro(spr.texture, spr.sourceRect, (Rectangle){300,300, spr.sourceRect.width, spr.sourceRect.height}, spr.origin, 0, WHITE);
-
-            EndMode2D();
-            EndShaderMode();
+            DrawTextureV(map->tilesets[0].tileTexture, (Vector2){0}, WHITE);
 
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
         EndDrawing();
     }
 
-    AnimationDestroy();
+    MapFree(map);
+
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
