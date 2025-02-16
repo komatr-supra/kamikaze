@@ -6,18 +6,23 @@
 #include "animation.h"
 #include "timer.h"
 
-void TimerTestPrintOneTime(void)
+void TimerTestPrintOneTime(void* data)
 {
     TraceLog(LOG_INFO, "one time timer");
 }
 
-void TimerTestPrintRepeat(void)
+void TimerTestPrintRepeat(void* data)
 {
-    TraceLog(LOG_INFO, "repeated timer");
-
+    int numberTest = -1;
+    if(data != NULL)
+    {
+        numberTest = *(int*)data;
+        *(int*)data += 1;
+    }
+    TraceLog(LOG_INFO, "forever timer %d", numberTest);
 }
 
-void TimerTestPrintTimes(void)
+void TimerTestPrintTimes(void* data)
 {
     TraceLog(LOG_INFO, "times timer");
 }
@@ -39,20 +44,40 @@ int main(void)
     SetTargetFPS(60);
 
     //timer tests
-    TimerSet(5.0f, TimerTestPrintOneTime, 1);
-    TimerSet(2.0f, TimerTestPrintRepeat, -1);
-    TimerSet(4.0f, TimerTestPrintTimes, 10);
+SetTraceLogLevel(LOG_DEBUG);
+
+    int foreverTimerCount = 0;
+
+    int handle = TimerSet(2.0f, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
+    TimerSet(1.0f, 5, TimerTestPrintTimes, NULL);
+    int handle2 = TimerSet(2.0f, -1, TimerTestPrintRepeat, NULL);
+    int handle3 = TimerSet(5.0f, 10, TimerTestPrintTimes, NULL);
+
+    //TimerSet(1.0f, 4, TimerTestPrintTimes, NULL);
 
 
 
     while (!WindowShouldClose())
     {
-        TimersTicks(GetFrameTime());
+
 
         if (IsKeyDown(KEY_RIGHT)) playerPosition.x += 2.0f;
         if (IsKeyDown(KEY_LEFT)) playerPosition.x -= 2.0f;
         if (IsKeyDown(KEY_UP)) playerPosition.y -= 2.0f;
         if (IsKeyDown(KEY_DOWN)) playerPosition.y += 2.0f;
+
+        //timer tests
+        TimerTicks(GetFrameTime());
+        if(IsKeyPressed(KEY_SPACE))
+        {
+            TimerCancel(handle, true);
+        }
+        if(IsKeyPressed(KEY_M)) TimerCancel(handle2, false);
+        if(IsKeyPressed(KEY_N)) TimerCancel(handle3, true);
+        if(IsKeyPressed(KEY_P))
+        {
+            TimerPauseSet(!TimerGetPauseState());
+        }
 
         BeginDrawing();
 
