@@ -12,7 +12,7 @@
 
 #include <stdbool.h>
 
-#define MAX_TIMERS 1000 /** max timers running at once */
+#define MAX_TIMERS 1001 /** max timers running at once */
 #define TIMER_UNLIMITED -1 /** constant for never ending timer */
 #define TIMER_ONCE 1 /** constant for 1 time timer */
 

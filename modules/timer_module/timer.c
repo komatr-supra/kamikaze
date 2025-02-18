@@ -8,41 +8,46 @@
  * @copyright Copyright (c) 2025
  *
  */
+#include <stdlib.h>
+#include <stdint.h>
 #include "timer.h"
 #include "raylib.h"
-#include <stdlib.h>
-
-typedef struct Timer{
-    int handler;
-    float duration;
-    float elapsed;
-    void (*callback)(void*);
-    void* callbackData;
-    int repeats;
-} Timer;
+#include "timer_common.h"
+#include "timer_pool.h"
 
 static bool m_isPaused = false;
-static Timer m_timers[MAX_TIMERS];
+static Timer** m_hashTable;
+static size_t m_timerID = 0;
 
-static int m_timerIndexes[MAX_TIMERS];
-static int m_timersCount = 0;
+static Timer** m_activeTimers;
+static int m_activeTimersCount = 0;
 
-static int m_timerFreeIndexes[MAX_TIMERS];
-static int n_timerFreeIndexSize = 0;
+static void* m_allocatedMemory;
 
-static int m_handlers[MAX_TIMERS];
-static int m_handleIndex = 1; //** zero is reserved for unused */
-
-static int m_handleFreeIndexes[MAX_TIMERS];
-static int m_handleFreeIndexSize = 0;
-
-static int GetHandleIndex(void)
+static size_t GetID(void)
 {
-    if(m_handleFreeIndexSize > 0) return m_handleFreeIndexes[--m_handleFreeIndexSize];
-    else m_handleIndex++;
+    return m_timerID++ % SIZE_MAX;
 }
 
-int TimerSet(float duration, int repeats, void (*callback)(void*), void* callbackData)
+static size_t GetHashIndex(size_t ID)
+{
+    return m_timerID % MAX_TIMERS;
+}
+
+void TimerInit()
+{
+    m_allocatedMemory = malloc(sizeof(Timer*) * MAX_TIMERS * 2);
+    if(m_allocatedMemory == NULL)
+    {
+        TraceLog(LOG_ERROR, "can't allocate space for timers");
+        return;
+    }
+    m_hashTable = m_allocatedMemory;
+    m_activeTimers = m_hashTable + MAX_TIMERS;
+    TimerPoolInit();
+}
+
+size_t TimerSet(unsigned int duration, int repeats, void (*callback)(void*), void* callbackData)
 {
     if(callback == NULL)
     {
@@ -54,63 +59,65 @@ int TimerSet(float duration, int repeats, void (*callback)(void*), void* callbac
         TraceLog(LOG_DEBUG, "timer set with 0 repeats! -> executing once");
         repeats = 1;
     }
-    Timer* newTimer = &m_timers[m_timersCount];
+    Timer* newTimer = TimerPoolGetTimer();
+    newTimer->isUsed = true;
+    newTimer->id = GetID();
     newTimer->duration = duration;
-    newTimer->elapsed = 0.0f;
+    newTimer->elapsed = 0;
     newTimer->callback = callback;
     newTimer->callbackData = callbackData;
     newTimer->repeats = repeats > 0 ? repeats - 1 : -1;
-    newTimer->handler = m_handleIndex;
-    m_handlers[m_handleIndex] = m_timersCount;
-    m_timersCount++;
-    return m_handleIndex++;
+    newTimer->usedIndex = m_activeTimersCount;
+
+    Timer* timerInHash = &m_hashTable[GetHashIndex(newTimer->id)];
+    while(timerInHash->next != NULL)
+    {
+        timerInHash = timerInHash->next;
+    }
+    timerInHash = newTimer;
+    m_activeTimers[m_activeTimersCount++] = newTimer;
+    return newTimer->id;
 }
 
-void TimerTicks(float deltaTime)
+void TimerTicks(int deltaTimeMs)
 {
     if(m_isPaused) return;
-    for (int i = 0; i < m_timersCount; i++)
+    for (int i = 0; i < m_activeTimersCount; i++)
     {
-        m_timers[i].elapsed += deltaTime;
-        if(m_timers[i].elapsed < m_timers[i].duration) continue;
-
-        if(m_timers[i].callback != NULL) m_timers[i].callback(m_timers[i].callbackData);
-        m_timers[i].elapsed = 0;
-        if(m_timers[i].repeats > 0)
+        m_activeTimers[i]->elapsed += deltaTimeMs;
+        if(m_activeTimers[i]->elapsed < m_activeTimers[i]->duration) continue;
+        //reset timer
+        m_activeTimers[i]->elapsed = 0;
+        // trigger callback
+        if(m_activeTimers[i]->callback != NULL) m_activeTimers[i]->callback(m_activeTimers[i]->callbackData);
+        // handle repeats
+        if(m_activeTimers[i]->repeats == -1) continue;
+        int remainingRepeats = m_activeTimers[i]->repeats--;
+        // remove timer
+        if(remainingRepeats == 0)
         {
-            m_timers[i].repeats--;
-        }
-        else if(m_timers[i].repeats != -1)
-        {
-            m_timersCount--;
-            if(m_timersCount > 0)
+            // from hash
+            Timer* checkedTimer = m_hashTable[GetHashIndex(m_activeTimers[i]->id)];
+            Timer* previous = NULL;
+            while (checkedTimer->id != m_activeTimers[i]->id && checkedTimer->next != NULL)
             {
-                m_handleFreeIndexes[m_handleFreeIndexSize++] = m_timers[i].handler;
-                m_timers[i] = m_timers[m_timersCount];
-                m_handlers[m_timers[i].handler] = i;
-                i--;
-            }
+                previous = checkedTimer;
+                checkedTimer = checkedTimer->next;
+            }            
+            if(previous != NULL) previous->next = checkedTimer->next;      
+            else checkedTimer == NULL;      
+            // return to pool
+            TimerPoolReturnTimer(m_activeTimers[i]);
+            // from active
+            m_activeTimers[i] = m_activeTimers[]
         }
+        
     }
 }
 
 void TimerCancel(int handle, bool triggerCallback)
 {
-    if(handle == 0) return;
-    int timerIndex = m_handlers[handle];
-    if(timerIndex == -1) return;
-    m_handlers[handle] = -1;
-    if(triggerCallback && m_timers[timerIndex].callback != NULL) m_timers[timerIndex].callback(m_timers[timerIndex].callbackData);
 
-    m_handleFreeIndexes[m_handleFreeIndexSize++] = m_timers[timerIndex].handler;
-    m_timersCount--;
-    if(timerIndex >= 0 && timerIndex < m_timersCount)
-    {
-        m_timers[timerIndex] = m_timers[m_timersCount];
-        m_handlers[m_timers[timerIndex].handler] = timerIndex;
-    }
-
-    TraceLog(LOG_DEBUG, "cancelling handler id: %d (timer index: %d)", handle, timerIndex);
 }
 
 void TimerPauseSet(bool isPaused)
