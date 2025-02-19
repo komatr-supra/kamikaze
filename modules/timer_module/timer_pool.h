@@ -36,7 +36,6 @@ static Timer* TimerPoolGetTimer()
 
 static void TimerPoolReturnTimer(Timer* timerToReturn)
 {
-    if(!timerToReturn->isUsed) return;
     int index = timerToReturn - pool;
     freeIndexes[freeIndexesSize++] = index;
 }

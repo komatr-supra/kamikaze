@@ -54,6 +54,7 @@ dkms.conf
 # CMake files - dont know if it is for all IDEs
 /cmake
 /build
+/.vscode
 
 # Tiled personal files (Tiled layout after opening)
 *.tiled-session

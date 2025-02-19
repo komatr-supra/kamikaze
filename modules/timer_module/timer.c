@@ -15,23 +15,34 @@
 #include "timer_common.h"
 #include "timer_pool.h"
 
-static bool m_isPaused = false;
-static Timer** m_hashTable;
-static size_t m_timerID = 0;
+static bool m_isPaused = false; //< if timers are paused(true) or timers running
+static Timer** m_hashTable; //< array of pointers, for quick access
+static size_t m_timerID = 0;    //< timers unique ID number(increase each timer)
 
-static Timer** m_activeTimers;
-static int m_activeTimersCount = 0;
+static Timer** m_activeTimers;  //< array of pointers for quick loop of active timers
+static int m_activeTimersCount = 0; //< total count of active timers(array length)
 
-
+/**
+ * @brief create an unique number as ID
+ * 
+ * @return size_t returned ID
+ */
 static size_t GetID(void)
 {
     return m_timerID++ % SIZE_MAX;
 }
 
-static size_t GetHashIndex(size_t ID)
+/**
+ * @brief Get the Hash Index from ID
+ * 
+ * @param ID unique id of the timer it is also a handle
+ * @return int index in hash table 
+ */
+static int GetHashIndex(size_t ID)
 {
     return ID % MAX_TIMERS;
 }
+
 
 void TimerInit(void)
 {    
@@ -117,12 +128,14 @@ void TimerTicks(int deltaTimeMs)
     }
 }
 
+
 void TimerCancel(size_t handle, bool triggerCallback)
 {
     // find
     int hashIndex = GetHashIndex(handle);
     Timer* checkedTimer = m_hashTable[hashIndex];
     if(checkedTimer == NULL) return; // no entry at given index
+    if(triggerCallback) checkedTimer->callback(checkedTimer->callbackData);
     Timer* previous = NULL;
     while (checkedTimer->id != handle && checkedTimer->next != NULL)
     {

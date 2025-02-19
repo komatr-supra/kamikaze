@@ -16,34 +16,42 @@
 #define TIMER_UNLIMITED -1 /** constant for never ending timer */
 #define TIMER_ONCE 1 /** constant for 1 time timer */
 
-
+/**
+ * @brief initialization of timer system
+ * 
+ */
 void TimerInit(void);
 
+/**
+ * @brief update all active timers
+ * 
+ * @param deltaTime time between frames in ms
+ */
 void TimerTicks(int deltaTime);
 
 /**
- * @brief create a timer, return handle
- *
- * @param duration timer duration
- * @param repeats number of repeats (-1 infinity, 0 and 1 are the same -> 1)
- * @param callback callback fnc, if callback isnt provided, then timer will NOT be created
+ * @brief set a new timer
+ * 
+ * @param duration duration in ms
+ * @param repeats number of repeats -1 infinite 0=1
+ * @param callback callback function
  * @param callbackData data passed to callback function
- * @return int handle for timer
+ * @return size_t unique ID used as handler
  */
 size_t TimerSet(unsigned int duration, int repeats, void (*callback)(void*), void* callbackData);
 
 /**
- * @brief cancel a given timer
- *
- * @param handle timer handle
- * @param triggerCallback if callback should be executed when timer is cancelled
+ * @brief cancel a timer
+ * 
+ * @param handle unique handle of the timer
+ * @param triggerCallback if callback should be triggered at cancel
  */
 void TimerCancel(size_t handle, bool triggerCallback);
 
 /**
- * @brief set pause state
- *
- * @param isPaused TRUE for pause, FALSE for run
+ * @brief set pause for timers
+ * 
+ * @param isPaused true for pause, false for run
  */
 void TimerPauseSet(bool isPaused);
 

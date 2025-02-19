@@ -48,10 +48,10 @@ SetTraceLogLevel(LOG_DEBUG);
     TimerInit();
     int foreverTimerCount = 0;
 
-    size_t handle = TimerSet(2.0f, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
-    TimerSet(1.0f, 5, TimerTestPrintTimes, NULL);
-    size_t handle2 = TimerSet(2.0f, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
-    size_t handle3 = TimerSet(5.0f, 10, TimerTestPrintTimes, NULL);
+    size_t handle = TimerSet(2000, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
+    TimerSet(1000, 5, TimerTestPrintTimes, NULL);
+    size_t handle2 = TimerSet(2000, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
+    size_t handle3 = TimerSet(5000, 10, TimerTestPrintTimes, NULL);
 
     //TimerSet(1.0f, 4, TimerTestPrintTimes, NULL);
 
