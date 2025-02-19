@@ -12,7 +12,7 @@ typedef struct Timer{
     void (*callback)(void*);
     void* callbackData;
     int repeats;
-    Timer* next;
+    struct Timer* next;
 } Timer;
 
 #endif

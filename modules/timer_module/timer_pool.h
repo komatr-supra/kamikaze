@@ -12,7 +12,7 @@ static int nextIndex = 0;
 static int* freeIndexes;
 static int freeIndexesSize = 0;
 
-void TimerPoolInit()
+static void TimerPoolInit()
 {
     void* allocatedMemory = MemAlloc(sizeof(Timer) * POOL_SIZE + sizeof(int) * POOL_SIZE);
     if(allocatedMemory == NULL)
@@ -21,10 +21,10 @@ void TimerPoolInit()
         return;
     }
     pool = allocatedMemory;
-    freeIndexes = ((Timer*)allocatedMemory) + POOL_SIZE;
+    freeIndexes = (int*)((Timer*)allocatedMemory) + POOL_SIZE;
 }
 
-Timer* TimerPoolGetTimer()
+static Timer* TimerPoolGetTimer()
 {
     if(freeIndexesSize > 0)
     {
@@ -34,7 +34,7 @@ Timer* TimerPoolGetTimer()
     return (pool + nextIndex++);
 }
 
-void TimerPoolReturnTimer(Timer* timerToReturn)
+static void TimerPoolReturnTimer(Timer* timerToReturn)
 {
     if(!timerToReturn->isUsed) return;
     int index = timerToReturn - pool;

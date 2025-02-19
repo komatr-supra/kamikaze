@@ -17,8 +17,9 @@
 #define TIMER_ONCE 1 /** constant for 1 time timer */
 
 
+void TimerInit(void);
 
-void TimerTicks(float deltaTime);
+void TimerTicks(int deltaTime);
 
 /**
  * @brief create a timer, return handle
@@ -29,7 +30,7 @@ void TimerTicks(float deltaTime);
  * @param callbackData data passed to callback function
  * @return int handle for timer
  */
-int TimerSet(float duration, int repeats, void (*callback)(void*), void* callbackData);
+size_t TimerSet(unsigned int duration, int repeats, void (*callback)(void*), void* callbackData);
 
 /**
  * @brief cancel a given timer
@@ -37,7 +38,7 @@ int TimerSet(float duration, int repeats, void (*callback)(void*), void* callbac
  * @param handle timer handle
  * @param triggerCallback if callback should be executed when timer is cancelled
  */
-void TimerCancel(int handle, bool triggerCallback);
+void TimerCancel(size_t handle, bool triggerCallback);
 
 /**
  * @brief set pause state

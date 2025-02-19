@@ -45,13 +45,13 @@ int main(void)
 
     //timer tests
 SetTraceLogLevel(LOG_DEBUG);
-
+    TimerInit();
     int foreverTimerCount = 0;
 
-    int handle = TimerSet(2.0f, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
+    size_t handle = TimerSet(2.0f, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
     TimerSet(1.0f, 5, TimerTestPrintTimes, NULL);
-    int handle2 = TimerSet(2.0f, -1, TimerTestPrintRepeat, NULL);
-    int handle3 = TimerSet(5.0f, 10, TimerTestPrintTimes, NULL);
+    size_t handle2 = TimerSet(2.0f, -1, TimerTestPrintRepeat, (void*)&foreverTimerCount);
+    size_t handle3 = TimerSet(5.0f, 10, TimerTestPrintTimes, NULL);
 
     //TimerSet(1.0f, 4, TimerTestPrintTimes, NULL);
 
@@ -67,7 +67,8 @@ SetTraceLogLevel(LOG_DEBUG);
         if (IsKeyDown(KEY_DOWN)) playerPosition.y += 2.0f;
 
         //timer tests
-        TimerTicks(GetFrameTime());
+        int tickMs = (int)(GetFrameTime() * 1000);
+        TimerTicks(tickMs);
         if(IsKeyPressed(KEY_SPACE))
         {
             TimerCancel(handle, true);
