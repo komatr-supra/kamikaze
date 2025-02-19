@@ -19,14 +19,14 @@
 
 
 // ------------------------------ region VARIABLES
-static DatabaseRecordAnimationDir* databaseRecords3D;   /**< 3D animations record collection */
+static DatabaseRecord3DAnimation* databaseRecords3D;   /**< 3D animations record collection */
 static int animationsInDatabaseCount;   /**< total animation records */
 static ResourceManagerTexture* resourceManager;    /**< local resource manager */
 // ------------------------------ endregion
 
 // ------------------------------ region DECLARATIONS
 
-DatabaseRecordAnimationDir* AnimationLoadCharacter(char* characterName);
+DatabaseRecord3DAnimation* AnimationLoadCharacter(char* characterName);
 
 /**
  * @brief Transform degrees to one of 8 degrees defined by iso view.
@@ -46,7 +46,7 @@ static DIRECTION GetDirectionEnum(int angleInDegree);
  * @todo create collection with better find access time
  * @return AnimationDir* single animation of given name(key)
  */
-static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* animationRecord3D, char* animationName);
+static AnimationDir* GetAnimationFromRecord(DatabaseRecord3DAnimation* animationRecord3D, char* animationName);
 
 /**
  * @brief Set the Frame inside animation
@@ -59,7 +59,7 @@ static void AddFrame(char* entity, char* spriteData, AnimationFrames* objectFram
 /// @brief
 /// @param entity
 /// @return
-static DatabaseRecordAnimationDir* CreateRecord(char* entity);
+static DatabaseRecord3DAnimation* CreateRecord(char* entity);
 
 /**
  * @brief insert a frame at given object
@@ -68,14 +68,14 @@ static DatabaseRecordAnimationDir* CreateRecord(char* entity);
  * @param frameData data from textrurepacker
  * @note frameData format: "animationName_angle_spriteNameID,textureName,xPosOnTexture,yPosOnTexture,width,height,xOrigin,yOrigin" x and y origin are top left corner offset
  */
-static void AnimationPush3DFrame(DatabaseRecordAnimationDir* ad, char* frameData);
+static void AnimationPush3DFrame(DatabaseRecord3DAnimation* ad, char* frameData);
 // ------------------------------ endregion
 
 // ------------------------------ region API
 
 void AnimationInit()
 {
-    databaseRecords3D = MemAlloc(sizeof(DatabaseRecordAnimationDir) * MAX_ANIMATIONS_IN_DATABASE);
+    databaseRecords3D = MemAlloc(sizeof(DatabaseRecord3DAnimation) * MAX_ANIMATIONS_IN_DATABASE);
     resourceManager = MemAlloc(sizeof(ResourceManagerTexture));
 }
 
@@ -87,7 +87,7 @@ void AnimationDestroy()
     databaseRecords3D = NULL;
 }
 
-const DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName)
+const DatabaseRecord3DAnimation* AnimationGetCharacterData(char* characterName)
 {
 
     for (int i = 0; i < animationsInDatabaseCount; i++)
@@ -100,7 +100,7 @@ const DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName)
     return AnimationLoadCharacter(characterName);
 }
 
-const AnimationDir* Animation3DGetAnimation(DatabaseRecordAnimationDir* animationCollection, char* animationName)
+const AnimationDir* Animation3DGetAnimation(DatabaseRecord3DAnimation* animationCollection, char* animationName)
 {
     for (size_t i = 0; i < animationCollection->animationsCount; i++)
     {
@@ -116,7 +116,7 @@ const AnimationDir* Animation3DGetAnimation(DatabaseRecordAnimationDir* animatio
 
 // ------------------------------ region PRIVATE FNC
 
-DatabaseRecordAnimationDir* AnimationLoadCharacter(char* characterName)
+DatabaseRecord3DAnimation* AnimationLoadCharacter(char* characterName)
 {
     char buffer[128] = "resources/characters/";
     strcat(buffer, characterName);
@@ -129,7 +129,7 @@ DatabaseRecordAnimationDir* AnimationLoadCharacter(char* characterName)
         TraceLog(LOG_ERROR, "character file cant be opened: %s", buffer);
         return NULL;
     }
-    DatabaseRecordAnimationDir* ad = CreateRecord(characterName);
+    DatabaseRecord3DAnimation* ad = CreateRecord(characterName);
     char* line = NULL;
     size_t size = 0;
     while (getline(&line, &size, f_character) != -1)
@@ -141,7 +141,7 @@ DatabaseRecordAnimationDir* AnimationLoadCharacter(char* characterName)
     return ad;
 }
 
-static void AnimationPush3DFrame(DatabaseRecordAnimationDir* ad, char* frameData)
+static void AnimationPush3DFrame(DatabaseRecord3DAnimation* ad, char* frameData)
 {
     char frameDataBuffer[64];
     strcpy(frameDataBuffer, frameData);
@@ -173,7 +173,7 @@ static DIRECTION GetDirectionEnum(int angleInDegree)
     default: return SOUTH_EAST;
     }
 }
-static AnimationDir* GetAnimationFromRecord(DatabaseRecordAnimationDir* ad, char* animationName)
+static AnimationDir* GetAnimationFromRecord(DatabaseRecord3DAnimation* ad, char* animationName)
 {
     for (size_t i = 0; i < ad->animationsCount; i++)
     {
@@ -233,10 +233,18 @@ static void AddFrame(char* entity, char* token, AnimationFrames* frames)
     frames->frameCount++;
 }
 
-static DatabaseRecordAnimationDir* CreateRecord(char* entity)
+static DatabaseRecord3DAnimation* CreateRecord(char* entity)
 {
     strcpy(databaseRecords3D[animationsInDatabaseCount].object, entity);
     databaseRecords3D[animationsInDatabaseCount].animationsCount = 0;
     return &databaseRecords3D[animationsInDatabaseCount++];
+}
+
+void AnimationGetAnimationsNames(char* buffer, DatabaseRecord3DAnimation* animationCollection)
+{
+    for (int i = 0; i < animationCollection->animationsCount; i++)
+    {
+        strcpy(buffer, animationCollection->animations[i].data.name);
+    }    
 }
 // ------------------------------ endregion

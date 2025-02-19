@@ -48,7 +48,7 @@ typedef struct AnimationFrames
 } AnimationFrames;
 
 /**
- * @brief data used for "3D" animations
+ * @brief data used for single "3D" animation
  *
  */
 typedef struct AnimationDir
@@ -61,11 +61,11 @@ typedef struct AnimationDir
  * @brief 3D animation record struct, all animation of given object
  *
  */
-typedef struct DatabaseRecordAnimationDir{
+typedef struct DatabaseRecord3DAnimation{
     char object[MAX_OWNER_NAME_LENGHT]; /**< same as a key for this record */
     AnimationDir animations[MAX_ANIMATIONS_PER_ENTITY]; /**< animations of this object - directions only */
     int animationsCount;    /**< total count of animations of this object */
-} DatabaseRecordAnimationDir;
+} DatabaseRecord3DAnimation;
 
 // ------------------------------ endregion
 
@@ -88,13 +88,15 @@ void AnimationDestroy(void);
  * @param characterName the character which own returned record
  * @return DatabaseRecordAnimationDir* pointer to record or NULL
  */
-const DatabaseRecordAnimationDir* AnimationGetCharacterData(char* characterName);
+const DatabaseRecord3DAnimation* AnimationGetCharacterData(char* characterName);
 
 /// @brief get specific animation
 /// @param animationCollection animation record of given character
 /// @param animationName name of the animation
 /// @return animation data or NULL
-const AnimationDir* Animation3DGetAnimation(DatabaseRecordAnimationDir* animationCollection, char* animationName);
+const AnimationDir* Animation3DGetAnimation(DatabaseRecord3DAnimation* animationCollection, char* animationName);
+
+void AnimationGetAnimationsNames(char* buffer, DatabaseRecord3DAnimation* animationCollection);
 // ------------------------------
 
 #endif

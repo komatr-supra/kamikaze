@@ -1,4 +1,5 @@
 add_subdirectory(sprite_module)
-add_subdirectory(resource_manager)
-add_subdirectory(animation)
+add_subdirectory(resource_manager_module)
+add_subdirectory(animation_module)
 add_subdirectory(timer_module)
+add_subdirectory(animator_module)

@@ -1,0 +1,3 @@
+add_library(animator_module STATIC animator.c)
+target_include_directories(animator_module PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(animator_module PRIVATE raylib animation_module timer_module sprite_module)
