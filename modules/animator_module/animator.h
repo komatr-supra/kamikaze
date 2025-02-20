@@ -3,6 +3,8 @@
  * save variables for right draw
  * each character got this structure
  */
+#ifndef ANIMATOR_H
+#define ANIMATOR_H
 #include <stdlib.h>
 #include "raylib.h"
 #include "animation.h"
@@ -15,40 +17,25 @@ typedef struct AnimatorBaseData
     int currentFrame;
 } AnimatorBaseData;
 
+
 typedef struct Animator3D
 {
+    bool isRunning;
     DIRECTION direction;
     AnimatorBaseData data;
     DatabaseRecord3DAnimation* animations;
     AnimationDir* currentAnimation;
+    size_t timerHandle;
 } Animator3D;
 
-void Animator3DCreate(Animator3D* animator, DatabaseRecord3DAnimation* objectAnimations, DIRECTION direction)
-{
-    animator->direction = direction;
-    animator->animations = objectAnimations;
-    animator->data.currentFrame = 0;
-    animator->data.speedMultiplier = ANIMATION_SPEED_DEFAULT; 
-    animator->currentAnimation = NULL;
-}
 
-void Animator3DFrameNext(Animator3D* animator)
-{
-    int frameNumber = animator->data.currentFrame;
-    frameNumber++;
-    if(frameNumber >= animator->currentAnimation->frames->frameCount) frameNumber = 0;
-}
 
-void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir)
-{
-    animator->direction = dir;
-}
+void Animator3DCreate(Animator3D* animator, const DatabaseRecord3DAnimation* objectAnimations, DIRECTION direction);
 
-void Animator3DDraw(Animator3D* animator, float x, float y)
-{
-    Texture2D texture = animator->currentAnimation->frames->sprites[animator->data.currentFrame].texture;
-    Rectangle rect = animator->currentAnimation->frames->sprites[animator->data.currentFrame].sourceRect;
-    Vector2 orig = animator->currentAnimation->frames->sprites[animator->data.currentFrame].origin;
-    Vector2 pos = {x + orig.x, y + orig.y};
-    DrawTextureRec(texture, rect, pos, WHITE);
-}
+void Animator3DSetAnimation(Animator3D* animator, int animationIndex);
+
+void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir);
+
+void Animator3DDraw(Animator3D* animator, float x, float y);
+
+#endif
