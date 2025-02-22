@@ -119,5 +119,5 @@ const AnimationDir* Animation3DGetAnimation(DatabaseRecord3DAnimation* animation
 
 void AnimationGetAnimationsNames(char* buffer, DatabaseRecord3DAnimation* animationCollection);
 // ------------------------------
-CommonAnimData* AnimationGetCommonAnimData(char* animName, bool* isNew);
+CommonAnimData* AnimationGetCommonAnimData(const char* animName);
 #endif

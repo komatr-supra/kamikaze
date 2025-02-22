@@ -53,7 +53,6 @@ SetTraceLogLevel(LOG_DEBUG);
     Animator3DCreate(&animator, data, EAST);
     int animIndex = 0;
     Animator3DSetAnimation(&animator, animIndex);
-    Animator3DStart(&animator);
 
 
     while (!WindowShouldClose())
@@ -87,6 +86,12 @@ SetTraceLogLevel(LOG_DEBUG);
             if(animIndex >= animator.animations->animationsCount) animIndex = 0;
             Animator3DSetAnimation(&animator, animIndex);
         }
+        else if(IsKeyPressed(KEY_J))
+        {
+            animIndex--;
+            if(animIndex < 0) animIndex = animator.animations->animationsCount - 1;
+            Animator3DSetAnimation(&animator, animIndex);
+        }
         BeginDrawing();
 
             ClearBackground(DARKGREEN);
@@ -94,11 +99,18 @@ SetTraceLogLevel(LOG_DEBUG);
             Animator3DDraw(&animator, 100.0f, 100.0f);
             DrawCircle(100, 100, 3, RED);
             const char* animName = animator.currentAnimation->data.name;
-            char animType[10];
-            sprintf(animType, "%d",animator.currentAnimType);
+            char* animType;
+            if(animator.currentAnimType == ANIM_TYPE_LOOP) animType = "loop";
+            else if(animator.currentAnimType == ANIM_TYPE_SINGLE) animType = "single";
+            else if(animator.currentAnimType == ANIM_TYPE_PINGPONG) animType = "ping-pong";
+            else animType = "NOT DEFINED";
             DrawText(animName, 130, 80, 10, WHITE);
-            DrawText(animType, 130, 100, 10, WHITE);
+            DrawText(animType, 130, 90, 10, WHITE);
+            char buffer[16];
+            sprintf(buffer, "%d", animator.data.currentFrame);
+            DrawText(buffer, 180, 90, 10, WHITE);
 
+            DrawText(animator.currentAnimation->dirAnimations[EAST].frames[animator.data.currentFrame].sprite.name, 130, 100, 10, WHITE);
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
         EndDrawing();
     }

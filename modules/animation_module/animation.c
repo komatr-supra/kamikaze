@@ -79,18 +79,16 @@ static void AnimationPush3DFrame(DatabaseRecord3DAnimation* ad, char* frameData)
 
 // ------------------------------ region API
 
-CommonAnimData* AnimationGetCommonAnimData(char* animName, bool* isNew)
+CommonAnimData* AnimationGetCommonAnimData(const char* animName)
 {
     for (int i = 0; i < animationsDatasCount; i++)
     {
-        if(strcmp(animName, animationsDatas[i].animName))
+        if(strcmp(animName, animationsDatas[i].animName) == 0)
         {
-            if(isNew != NULL) *isNew = false;
             return &animationsDatas[i];
         }
     }
-    if(isNew != NULL) *isNew = true;
-    return &animationsDatas[animationsDatasCount++];
+    return NULL;
 }
 
 void AnimationInit()
@@ -114,10 +112,12 @@ void AnimationInit()
             strcpy(animDataBuffer, line);
             //name
             char* token = strtok(animDataBuffer, ",");
-            bool isNew = false;
-            CommonAnimData* comAnimData = AnimationGetCommonAnimData(token, &isNew);
-            if(isNew)
+            CommonAnimData* comAnimData = AnimationGetCommonAnimData(token);
+            if(comAnimData == NULL)
             {
+                comAnimData = &animationsDatas[animationsDatasCount];
+                animationsDatasCount++;
+                strcpy(comAnimData->animName, token);
                 // speed
                 token = strtok(NULL, ",");
                 int animSpeed = atoi(token);
@@ -172,9 +172,9 @@ const AnimationDir* Animation3DGetAnimation(DatabaseRecord3DAnimation* animation
 // ------------------------------ region PRIVATE FNC
 ANIM_TYPE GetAnimType(char* text)
 {
-    if(strcmp(text, "loop")) return ANIM_TYPE_LOOP;
-    else if(strcmp(text, "single")) return ANIM_TYPE_SINGLE;
-    else if(strcmp(text, "pingpong")) return ANIM_TYPE_PINGPONG;
+    if(strcmp(text, "loop") == 0) return ANIM_TYPE_LOOP;
+    else if(strcmp(text, "single") == 0) return ANIM_TYPE_SINGLE;
+    else if(strcmp(text, "pingpong") == 0) return ANIM_TYPE_PINGPONG;
     else
     {
         TraceLog(LOG_DEBUG, "anim type cant be found, set to loop");
