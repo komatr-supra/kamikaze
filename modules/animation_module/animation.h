@@ -18,6 +18,18 @@
 #define MAX_OWNER_NAME_LENGHT 32    /**< max lenght of the key value */
 #define MAX_ANIMATION_FRAMES 16 /**< max animation frames per clip */
 
+
+
+typedef struct Callback{
+    void (*fnc)(void*, void*);  //< callback function "void function(animator, param->below)"
+    void* param;    //< parameter passed to function
+    struct Callback* next;  //< for list of callbacks
+} Callback;
+
+typedef enum ANIM_TYPE{
+    ANIM_TYPE_LOOP, ANIM_TYPE_SINGLE, ANIM_TYPE_PINGPONG
+} ANIM_TYPE;
+
 /**
  * @brief Direction ENUM, 8 options. From right, anti-clockwise.
  *
@@ -34,8 +46,12 @@ typedef enum DIRECTION{
 typedef struct AnimationBaseData
 {
     char name[32]; /**< name as ID */
-    float speed;
 } AnimationBaseData;
+
+typedef struct FrameData{
+    Sprite sprite;
+    Callback* callback;
+} FrameData;
 
 /**
  * @brief collection of frames and lenght of this collection
@@ -43,7 +59,7 @@ typedef struct AnimationBaseData
  */
 typedef struct AnimationFrames
 {
-    Sprite sprites[MAX_ANIMATION_FRAMES]; /**< simple array of sprites */
+    FrameData frames[MAX_ANIMATION_FRAMES]; /**< simple array of sprites */
     int frameCount; /**< lenght of the animation(number of used sprites) */
 } AnimationFrames;
 
@@ -54,7 +70,7 @@ typedef struct AnimationFrames
 typedef struct AnimationDir
 {
     AnimationBaseData data; /**< base data about animation */
-    AnimationFrames frames[DIRECTION_COUNT]; /**< directions for this animation */
+    AnimationFrames dirAnimations[DIRECTION_COUNT]; /**< directions for this animation */
 } AnimationDir;
 
 /**
@@ -67,6 +83,11 @@ typedef struct DatabaseRecord3DAnimation{
     int animationsCount;    /**< total count of animations of this object */
 } DatabaseRecord3DAnimation;
 
+typedef struct CommonAnimData{
+    char animName[32];
+    int speedMS;
+    ANIM_TYPE animationType;
+} CommonAnimData;
 // ------------------------------ endregion
 
 // ------------------------------ region DECLARATIONS
@@ -98,5 +119,5 @@ const AnimationDir* Animation3DGetAnimation(DatabaseRecord3DAnimation* animation
 
 void AnimationGetAnimationsNames(char* buffer, DatabaseRecord3DAnimation* animationCollection);
 // ------------------------------
-
+CommonAnimData* AnimationGetCommonAnimData(char* animName, bool* isNew);
 #endif

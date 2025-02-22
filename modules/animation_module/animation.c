@@ -15,16 +15,22 @@
 #include <stdio.h>
 
 #define MAX_ANIMATIONS_IN_DATABASE 500 /**< maximum animations loaded at the same time */
-#define ANIMATION_SPEED_DEFAULT 1/60.0f
+#define ANIMATION_SPEED_DEFAULT 20
+
+#define MAX_DIFF_ANIMS 30
+
 
 
 // ------------------------------ region VARIABLES
 static DatabaseRecord3DAnimation* databaseRecords3D;   /**< 3D animations record collection */
 static int animationsInDatabaseCount;   /**< total animation records */
 static ResourceManagerTexture* resourceManager;    /**< local resource manager */
+static CommonAnimData animationsDatas[MAX_DIFF_ANIMS];
+static int animationsDatasCount;
 // ------------------------------ endregion
 
 // ------------------------------ region DECLARATIONS
+ANIM_TYPE GetAnimType(char* text);
 
 DatabaseRecord3DAnimation* AnimationLoadCharacter(char* characterName);
 
@@ -73,10 +79,59 @@ static void AnimationPush3DFrame(DatabaseRecord3DAnimation* ad, char* frameData)
 
 // ------------------------------ region API
 
+CommonAnimData* AnimationGetCommonAnimData(char* animName, bool* isNew)
+{
+    for (int i = 0; i < animationsDatasCount; i++)
+    {
+        if(strcmp(animName, animationsDatas[i].animName))
+        {
+            if(isNew != NULL) *isNew = false;
+            return &animationsDatas[i];
+        }
+    }
+    if(isNew != NULL) *isNew = true;
+    return &animationsDatas[animationsDatasCount++];
+}
+
 void AnimationInit()
 {
     databaseRecords3D = MemAlloc(sizeof(DatabaseRecord3DAnimation) * MAX_ANIMATIONS_IN_DATABASE);
     resourceManager = MemAlloc(sizeof(ResourceManagerTexture));
+    // other animation data(name,speed,animType)
+    char* buffer = "resources/characters/characters.aed";
+    FILE* f_animData = fopen(buffer, "r");
+    if(f_animData == NULL)
+    {
+        TraceLog(LOG_ERROR, "character animation data file cant be opened: %s", buffer);
+    }
+    else
+    {
+        char* line = NULL;
+        size_t size = 0;
+        while (getline(&line, &size, f_animData) != -1)
+        {
+            char animDataBuffer[32];
+            strcpy(animDataBuffer, line);
+            //name
+            char* token = strtok(animDataBuffer, ",");
+            bool isNew = false;
+            CommonAnimData* comAnimData = AnimationGetCommonAnimData(token, &isNew);
+            if(isNew)
+            {
+                // speed
+                token = strtok(NULL, ",");
+                int animSpeed = atoi(token);
+                if(animSpeed == -1) animSpeed = ANIMATION_SPEED_DEFAULT;
+                comAnimData->speedMS = 1000 / animSpeed;
+                // type
+                token = strtok(NULL, "\n");
+                comAnimData->animationType = GetAnimType(token);
+            }
+            else TraceLog(LOG_WARNING, "duplication common animation data: %s", comAnimData->animName);
+        }
+        free(line);
+        fclose(f_animData);
+    }
 }
 
 void AnimationDestroy()
@@ -115,6 +170,18 @@ const AnimationDir* Animation3DGetAnimation(DatabaseRecord3DAnimation* animation
 // ------------------------------ endregion
 
 // ------------------------------ region PRIVATE FNC
+ANIM_TYPE GetAnimType(char* text)
+{
+    if(strcmp(text, "loop")) return ANIM_TYPE_LOOP;
+    else if(strcmp(text, "single")) return ANIM_TYPE_SINGLE;
+    else if(strcmp(text, "pingpong")) return ANIM_TYPE_PINGPONG;
+    else
+    {
+        TraceLog(LOG_DEBUG, "anim type cant be found, set to loop");
+        return ANIM_TYPE_LOOP;
+    }
+}
+
 
 DatabaseRecord3DAnimation* AnimationLoadCharacter(char* characterName)
 {
@@ -156,7 +223,7 @@ static void AnimationPush3DFrame(DatabaseRecord3DAnimation* ad, char* frameData)
     //check if there is a frame in this direction
     token = strtok(NULL, ",");
 
-    AddFrame(ad->object, token, &anim->frames[dir]);
+    AddFrame(ad->object, token, &anim->dirAnimations[dir]);
 }
 
 static DIRECTION GetDirectionEnum(int angleInDegree)
@@ -183,10 +250,9 @@ static AnimationDir* GetAnimationFromRecord(DatabaseRecord3DAnimation* ad, char*
         }
     }
     strcpy(ad->animations[ad->animationsCount].data.name, animationName);
-    ad->animations[ad->animationsCount].data.speed = ANIMATION_SPEED_DEFAULT;
     for (size_t i = 0; i < 8; i++)
     {
-        ad->animations[ad->animationsCount].frames[i].frameCount = 0;
+        ad->animations[ad->animationsCount].dirAnimations[i].frameCount = 0;
     }
 
 
@@ -197,7 +263,7 @@ static void AddFrame(char* entity, char* token, AnimationFrames* frames)
     // if it exist, just skip
     for (size_t i = 0; i < frames->frameCount; i++)
     {
-        if(strcmp(frames->sprites[i].name, token) == 0)
+        if(strcmp(frames->frames[i].sprite.name, token) == 0)
         {
             return;
         }
@@ -224,12 +290,12 @@ static void AddFrame(char* entity, char* token, AnimationFrames* frames)
     sprite.origin.y = atoi(strtok(NULL, ","));
     //TraceLog(LOG_INFO, "%s : %d", entity, frames->frameCount);
     int comparedSpriteIndex = frames->frameCount - 1;
-    while (comparedSpriteIndex >= 0 && strcmp(frames->sprites[comparedSpriteIndex].name, sprite.name) > 0)
+    while (comparedSpriteIndex >= 0 && strcmp(frames->frames[comparedSpriteIndex].sprite.name, sprite.name) > 0)
     {
-        frames->sprites[comparedSpriteIndex + 1] = frames->sprites[comparedSpriteIndex];
+        frames->frames[comparedSpriteIndex + 1].sprite = frames->frames[comparedSpriteIndex].sprite;
         comparedSpriteIndex--;
     }
-    frames->sprites[comparedSpriteIndex + 1] = sprite;
+    frames->frames[comparedSpriteIndex + 1].sprite = sprite;
     frames->frameCount++;
 }
 
@@ -237,6 +303,7 @@ static DatabaseRecord3DAnimation* CreateRecord(char* entity)
 {
     strcpy(databaseRecords3D[animationsInDatabaseCount].object, entity);
     databaseRecords3D[animationsInDatabaseCount].animationsCount = 0;
+
     return &databaseRecords3D[animationsInDatabaseCount++];
 }
 
@@ -245,6 +312,7 @@ void AnimationGetAnimationsNames(char* buffer, DatabaseRecord3DAnimation* animat
     for (int i = 0; i < animationCollection->animationsCount; i++)
     {
         strcpy(buffer, animationCollection->animations[i].data.name);
-    }    
+    }
 }
 // ------------------------------ endregion
+

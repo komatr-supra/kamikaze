@@ -21,11 +21,14 @@ typedef struct AnimatorBaseData
 typedef struct Animator3D
 {
     bool isRunning;
+    float speedMultiplier;
     DIRECTION direction;
     AnimatorBaseData data;
-    DatabaseRecord3DAnimation* animations;
-    AnimationDir* currentAnimation;
+    const DatabaseRecord3DAnimation* animations;
+    const AnimationDir* currentAnimation;
     size_t timerHandle;
+    ANIM_TYPE currentAnimType;
+    bool isPingpongGoingBack;
 } Animator3D;
 
 
@@ -33,6 +36,10 @@ typedef struct Animator3D
 void Animator3DCreate(Animator3D* animator, const DatabaseRecord3DAnimation* objectAnimations, DIRECTION direction);
 
 void Animator3DSetAnimation(Animator3D* animator, int animationIndex);
+
+void Animator3DStart(Animator3D* animator);
+
+void Animator3DStop(Animator3D* animator);
 
 void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir);
 

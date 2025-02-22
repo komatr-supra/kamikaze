@@ -49,11 +49,11 @@ SetTraceLogLevel(LOG_DEBUG);
     TimerInit();
     AnimationInit();
     Animator3D animator;
-    DatabaseRecord3DAnimation* data = AnimationGetCharacterData("knight");
+    const DatabaseRecord3DAnimation* data = AnimationGetCharacterData("knight");
     Animator3DCreate(&animator, data, EAST);
     int animIndex = 0;
     Animator3DSetAnimation(&animator, animIndex);
-    
+    Animator3DStart(&animator);
 
 
     while (!WindowShouldClose())
@@ -77,6 +77,12 @@ SetTraceLogLevel(LOG_DEBUG);
         }
         if(IsKeyPressed(KEY_N))
         {
+            if(animator.isRunning) Animator3DStop(&animator);
+            else Animator3DStart(&animator);
+
+        }
+        if(IsKeyPressed(KEY_K))
+        {
             animIndex++;
             if(animIndex >= animator.animations->animationsCount) animIndex = 0;
             Animator3DSetAnimation(&animator, animIndex);
@@ -87,8 +93,12 @@ SetTraceLogLevel(LOG_DEBUG);
             BeginMode2D(camera);
             Animator3DDraw(&animator, 100.0f, 100.0f);
             DrawCircle(100, 100, 3, RED);
-            char* animName = animator.currentAnimation->data.name;
-            DrawText(animName, 130, 100, 10, WHITE);
+            const char* animName = animator.currentAnimation->data.name;
+            char animType[10];
+            sprintf(animType, "%d",animator.currentAnimType);
+            DrawText(animName, 130, 80, 10, WHITE);
+            DrawText(animType, 130, 100, 10, WHITE);
+
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
         EndDrawing();
     }

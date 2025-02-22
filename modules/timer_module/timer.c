@@ -17,14 +17,14 @@
 
 static bool m_isPaused = false; //< if timers are paused(true) or timers running
 static Timer** m_hashTable; //< array of pointers, for quick access
-static size_t m_timerID = 0;    //< timers unique ID number(increase each timer)
+static size_t m_timerID = 1;    //< timers unique ID number(increase each timer) 0 for unused
 
 static Timer** m_activeTimers;  //< array of pointers for quick loop of active timers
 static int m_activeTimersCount = 0; //< total count of active timers(array length)
 
 /**
  * @brief create an unique number as ID
- * 
+ *
  * @return size_t returned ID
  */
 static size_t GetID(void)
@@ -34,9 +34,9 @@ static size_t GetID(void)
 
 /**
  * @brief Get the Hash Index from ID
- * 
+ *
  * @param ID unique id of the timer it is also a handle
- * @return int index in hash table 
+ * @return int index in hash table
  */
 static int GetHashIndex(size_t ID)
 {
@@ -45,7 +45,7 @@ static int GetHashIndex(size_t ID)
 
 
 void TimerInit(void)
-{    
+{
     m_hashTable = MemAlloc(sizeof(Timer*) * MAX_TIMERS);;
     m_activeTimers = MemAlloc(sizeof(Timer*) * MAX_TIMERS);
     TimerPoolInit();

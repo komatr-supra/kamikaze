@@ -1,0 +1,14 @@
+castspell,-1,loop
+die,-1,single
+frontflip,-1,single
+idle,-1,loop
+idle2,-1,pingpong
+melee,-1,single
+melee2,-1,single
+run,-1,loop
+shieldblockmid,-1,loop
+shieldblockstart,-1,single
+special1,-1,single
+special2,-1,single
+takedamage,-1,single
+unshealthsword,-1,single
