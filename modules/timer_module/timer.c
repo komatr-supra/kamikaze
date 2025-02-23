@@ -1,7 +1,7 @@
 /**
  * @file timer.c
  * @author komatr (NONE_DONKEY@domain.com)
- * @brief
+ * @brief timer is alive for entire program
  * @version 0.1
  * @date 15-02-2025
  *
@@ -15,13 +15,15 @@
 #include "timer_common.h"
 #include "timer_pool.h"
 
-static bool m_isPaused = false; //< if timers are paused(true) or timers running
-static Timer** m_hashTable; //< array of pointers, for quick access
-static size_t m_timerID = 1;    //< timers unique ID number(increase each timer) 0 for unused
-
-static Timer** m_activeTimers;  //< array of pointers for quick loop of active timers
+#pragma region VARIABLES
+static bool m_isPaused = false;     //< if timers are paused(true) or timers running
+static Timer** m_hashTable;         //< array of pointers, for quick access
+static size_t m_timerID = 1;        //< timers unique ID number(increase each timer) 0 for unused
+static Timer** m_activeTimers;      //< array of pointers for quick loop of active timers
 static int m_activeTimersCount = 0; //< total count of active timers(array length)
+#pragma endregion
 
+#pragma region DECLARATIONS
 /**
  * @brief create an unique number as ID
  *
@@ -42,13 +44,21 @@ static int GetHashIndex(size_t ID)
 {
     return ID % MAX_TIMERS;
 }
+#pragma endregion
 
-
+#pragma region API
 void TimerInit(void)
 {
     m_hashTable = MemAlloc(sizeof(Timer*) * MAX_TIMERS);;
     m_activeTimers = MemAlloc(sizeof(Timer*) * MAX_TIMERS);
     TimerPoolInit();
+}
+
+void TimerDestroy(void)
+{
+    free(m_hashTable);
+    free(m_activeTimers);
+    TimerPoolDestroy();
 }
 
 size_t TimerSet(unsigned int duration, int repeats, void (*callback)(void*), void* callbackData)
@@ -124,10 +134,8 @@ void TimerTicks(int deltaTimeMs)
             m_activeTimersCount--;
             i--;
         }
-
     }
 }
-
 
 void TimerCancel(size_t handle, bool triggerCallback)
 {
@@ -164,3 +172,4 @@ bool TimerGetPauseState(void)
 {
     return m_isPaused;
 }
+#pragma endregion

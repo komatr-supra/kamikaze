@@ -1,21 +1,23 @@
+/**
+ * @file animator.c
+ * @author komatr (NONE_DONKEY@domain.com)
+ * @brief functions for animator module, each animated object should have its own animator (control animations, speed, callbacks, etc...)
+ * @version 0.1
+ * @date 21-02-2025
+ *
+ * @copyright Copyright (c) 2025
+ *
+ */
 #include "animator.h"
 #include "timer.h"
 
-void Animator3DFrameNext(void* animator);
-
-void Animator3DCreate(Animator3D* animator, const DatabaseRecord3DAnimation* objectAnimations, DIRECTION direction)
-{
-    animator->direction = direction;
-    animator->animations = objectAnimations;
-    animator->data.currentFrame = 0;
-    animator->data.speedMultiplier = ANIMATION_SPEED_DEFAULT;
-    animator->currentAnimation = NULL;
-    animator->speedMultiplier = 1.0f;
-    animator->isRunning = false;
-
-}
-
-void Animator3DFrameNext(void* animator)
+#pragma region DECLARATIONS
+/**
+ * @brief move to the next frame(not nessesary mean frame++)
+ * @details used as callback in timers! => not callded directly
+ * @param animator animator, which should change frame
+ */
+const void Animator3DFrameNext(void* animator)
 {
     Animator3D* animatorLocal = ((Animator3D*)animator);
     switch (animatorLocal->currentAnimType)
@@ -54,10 +56,21 @@ void Animator3DFrameNext(void* animator)
                 animatorLocal->isPingpongGoingBack = true;
             }
         }
-
         break;
     }
+}
+#pragma endregion
 
+#pragma region API
+void Animator3DCreate(Animator3D* animator, const DatabaseRecord3DAnimation* objectAnimations, DIRECTION direction)
+{
+    animator->direction = direction;
+    animator->animations = objectAnimations;
+    animator->data.currentFrame = 0;
+    animator->data.speedMultiplier = ANIMATION_SPEED_DEFAULT;
+    animator->currentAnimation = NULL;
+    animator->speedMultiplier = ANIMATION_SPEED_DEFAULT;
+    animator->isRunning = false;
 }
 
 void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir)
@@ -71,14 +84,12 @@ void Animator3DDraw(Animator3D* animator, float x, float y)
     Rectangle rect = animator->currentAnimation->dirAnimations[animator->direction].frames[animator->data.currentFrame].sprite.sourceRect;
     Vector2 orig = animator->currentAnimation->dirAnimations[animator->direction].frames[animator->data.currentFrame].sprite.origin;
     Vector2 pos = {x - orig.x, y - orig.y};
-    //Vector2 pos = {x, y};
 
     DrawTextureRec(texture, rect, pos, WHITE);
 }
 
 void Animator3DSetAnimation(Animator3D* animator, int animationIndex)
 {
-    //TimerCancel(animator->timerHandle, false);
     if(animator->currentAnimation == &animator->animations->animations[animationIndex]) return;
     animator->currentAnimation = &animator->animations->animations[animationIndex];
     CommonAnimData* data = AnimationGetCommonAnimData(animator->currentAnimation->data.name);
@@ -116,3 +127,4 @@ void Animator3DStop(Animator3D* animator)
     TimerCancel(animator->timerHandle, false);
     animator->timerHandle = 0;
 }
+#pragma endregion

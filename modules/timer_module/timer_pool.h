@@ -1,3 +1,13 @@
+/**
+ * @file timer_pool.h
+ * @author komatr (NONE_DONKEY@domain.com)
+ * @brief pool for timers
+ * @version 0.1
+ * @date 20-02-2025
+ *
+ * @copyright Copyright (c) 2025
+ *
+ */
 #ifndef TIMER_POOL_H
 #define TIMER_POOL_H
 
@@ -12,19 +22,37 @@ static int nextIndex = 0;
 static int* freeIndexes;
 static int freeIndexesSize = 0;
 
-static void TimerPoolInit()
+/// @brief constructor of the timer pool
+static void TimerPoolInit(void)
 {
-    void* allocatedMemory = MemAlloc(sizeof(Timer) * POOL_SIZE + sizeof(int) * POOL_SIZE);
-    if(allocatedMemory == NULL)
+    pool = MemAlloc(sizeof(Timer) * POOL_SIZE);
+    if(pool == NULL)
     {
         TraceLog(LOG_ERROR, "can't allocate space for timer pool");
         return;
     }
-    pool = allocatedMemory;
-    freeIndexes = (int*)((Timer*)allocatedMemory) + POOL_SIZE;
+    freeIndexes = MemAlloc(sizeof(int) * POOL_SIZE);
+    if(freeIndexes == NULL)
+    {
+        TraceLog(LOG_ERROR, "can't allocate space for pool free indexes");
+        free(pool);
+        return;
+    }
 }
 
-static Timer* TimerPoolGetTimer()
+/// @brief destructor of the timer pool
+static void TimerPoolDestroy(void)
+{
+    free(pool);
+    free(freeIndexes);
+}
+
+/**
+ * @brief find free timer in pool and return it
+ * @bug can't reallocate space, when all timers are used
+ * @return Timer* free timer from pool
+ */
+static Timer* TimerPoolGetTimer(void)
 {
     if(freeIndexesSize > 0)
     {
@@ -34,6 +62,11 @@ static Timer* TimerPoolGetTimer()
     return (pool + nextIndex++);
 }
 
+/**
+ * @brief mark timer as unused, and can be returned with fnc "Timer* TimerPoolGetTimer(void)"
+ * @bug make a guard, like double free, real timer pointer, null, etc...
+ * @param timerToReturn timer, which should be returned
+ */
 static void TimerPoolReturnTimer(Timer* timerToReturn)
 {
     int index = timerToReturn - pool;

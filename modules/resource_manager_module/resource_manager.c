@@ -11,9 +11,16 @@
 #include "resource_manager.h"
 #include <string.h>
 
-#pragma region TEXTURE
 #pragma region DECLARATIONS
-static Texture2D ResourceManagerTextureLoad(ResourceManagerTexture* manager, const char* textureLocation);
+/**
+ * @brief load a texture and save it inside given manager
+ *
+ * @param manager manager where to load the texture
+ * @param path texture path
+ * @return Texture2D created texture data
+ * @todo complete it
+ */
+static Texture2D ResourceManagerTextureLoad(ResourceManagerTexture* manager, char* textureLocation);
 #pragma endregion
 
 #pragma region API
@@ -21,7 +28,7 @@ void ResourceManagerTextureInit(ResourceManagerTexture* manager) {
     manager->textureCount = 0;
 }
 
-Texture2D ResourceManagerGetTexture(ResourceManagerTexture* manager, const char* textureLocation) {
+Texture2D ResourceManagerGetTexture(ResourceManagerTexture* manager, char* textureLocation) {
     for (int i = 0; i < manager->textureCount; i++) {
         if (strcmp(manager->textures[i].path, textureLocation) == 0) {
             return manager->textures[i].texture;
@@ -39,22 +46,14 @@ void ResourceManagerTextureUnloadAll(ResourceManagerTexture* manager) {
 #pragma endregion
 
 #pragma region PRIVATE FNC
-/**
- * @brief load a texture and save it inside given manager
- *
- * @param manager manager where to load the texture
- * @param path texture path
- * @return Texture2D created texture data
- * @todo complete it
- */
-static Texture2D ResourceManagerTextureLoad(ResourceManagerTexture* manager, const char* textureLocation) {
+static Texture2D ResourceManagerTextureLoad(ResourceManagerTexture* manager, char* textureLocation) {
     strcpy(manager->textures[manager->textureCount].path, textureLocation);
-    char bufferPath[64] = "resources/characters/knight/";
-    strcat(bufferPath, textureLocation);
+    char bufferPath[64];
+    strcpy(bufferPath, textureLocation);
     strcat(bufferPath, ".png");
     manager->textures[manager->textureCount].texture = LoadTexture(bufferPath);
 
     return manager->textures[manager->textureCount++].texture;
 }
 #pragma endregion
-#pragma endregion
+

@@ -14,110 +14,106 @@
 #include "sprite.h"
 #include "resource_manager.h"
 
-#define MAX_ANIMATIONS_PER_ENTITY 20 /**< maximum animations per entity */
-#define MAX_OWNER_NAME_LENGHT 32    /**< max lenght of the key value */
-#define MAX_ANIMATION_FRAMES 16 /**< max animation frames per clip */
+#define MAX_ANIMATIONS_PER_ENTITY 20    //< maximum animations per entity
+#define MAX_OWNER_NAME_LENGHT 32        //< max lenght of the key value
+#define MAX_ANIMATION_FRAMES 16         //< max animation frames per clip
 
-
-
+#pragma region STRUCTS
+/// @brief callback structure (maybe private??)
 typedef struct Callback{
     void (*fnc)(void*, void*);  //< callback function "void function(animator, param->below)"
-    void* param;    //< parameter passed to function
-    struct Callback* next;  //< for list of callbacks
+    void* param;                //< parameter passed to function
+    struct Callback* next;      //< for list of callbacks
 } Callback;
 
+/// @brief animation play type (loop,single,pingpong...)
 typedef enum ANIM_TYPE{
-    ANIM_TYPE_LOOP, ANIM_TYPE_SINGLE, ANIM_TYPE_PINGPONG
+    ANIM_TYPE_LOOP,     //< play animation in loop 0->n and again from zero (forever)
+    ANIM_TYPE_SINGLE,   //< play animation one time and then stop
+    ANIM_TYPE_PINGPONG  //< play animation one time forward then backward and then stop
 } ANIM_TYPE;
 
-/**
- * @brief Direction ENUM, 8 options. From right, anti-clockwise.
- *
- */
+/// @brief Direction ENUM, 8 options. From right, anti-clockwise.
 typedef enum DIRECTION{
     EAST, NORTH_EAST, NORTH, NORTH_WEST, WEST, SOUTH_WEST, SOUTH, SOUTH_EAST, DIRECTION_COUNT
 } DIRECTION;
 
-// ------------------------------region STRUCTURES
-
-/**
- * @brief structure with base values used in each animation
- */
+/// @brief structure with values used in each animation
 typedef struct AnimationBaseData
 {
-    char name[32]; /**< name as ID */
+    char name[32];  //< name as ID
 } AnimationBaseData;
 
+/// @brief data for each frame
 typedef struct FrameData{
-    Sprite sprite;
-    Callback* callback;
+    Sprite sprite;      //< sprite of this frame
+    Callback* callback; //< callback of this frame -> stored as a linked list
 } FrameData;
 
-/**
- * @brief collection of frames and lenght of this collection
- *
- */
+/// @brief one "direction" of frames (just an array)
 typedef struct AnimationFrames
 {
-    FrameData frames[MAX_ANIMATION_FRAMES]; /**< simple array of sprites */
-    int frameCount; /**< lenght of the animation(number of used sprites) */
+    FrameData frames[MAX_ANIMATION_FRAMES]; //< array of frames
+    int frameCount;                         //< frames count
 } AnimationFrames;
 
-/**
- * @brief data used for single "3D" animation
- *
- */
-typedef struct AnimationDir
+/// @brief struct of the 3D(8 dir) animation
+typedef struct Animation3D
 {
-    AnimationBaseData data; /**< base data about animation */
-    AnimationFrames dirAnimations[DIRECTION_COUNT]; /**< directions for this animation */
-} AnimationDir;
+    AnimationBaseData data;                         //< base data for this animation
+    AnimationFrames dirAnimations[DIRECTION_COUNT]; //< array of frames struct for all 8 directions
+} Animation3D;
 
-/**
- * @brief 3D animation record struct, all animation of given object
- *
- */
+
+/// @brief all animations records of the object
 typedef struct DatabaseRecord3DAnimation{
-    char object[MAX_OWNER_NAME_LENGHT]; /**< same as a key for this record */
-    AnimationDir animations[MAX_ANIMATIONS_PER_ENTITY]; /**< animations of this object - directions only */
-    int animationsCount;    /**< total count of animations of this object */
+    char object[MAX_OWNER_NAME_LENGHT];                 //< name of the object(also used as a key)
+    Animation3D animations[MAX_ANIMATIONS_PER_ENTITY];  //< 3D animations for this object
+    int animationsCount;                                //< number of used animations
 } DatabaseRecord3DAnimation;
 
+
+/// @brief common data for animations
+/// @warning shared between all animations with the same name!!!
 typedef struct CommonAnimData{
     char animName[32];
     int speedMS;
     ANIM_TYPE animationType;
 } CommonAnimData;
-// ------------------------------ endregion
+#pragma endregion
 
-// ------------------------------ region DECLARATIONS
-/**
- * @brief initialize animation system, ONLY ONE animation system exist at given time
- * @warning this will allocate a space on the HEAP - don't forget to call AnimationDestroy()
- */
+#pragma region DECLARATIONS
+/// @brief initialize animation system, ONLY ONE animation system exist at given time
+/// @warning this will allocate a space on the HEAP - don't forget to call AnimationDestroy()
 void AnimationInit(void);
 
-/**
- * @brief clear all allocated resources, open files, ...  and prepare app for EXIT, or a NEW USE
- *
- */
+/// @brief cleanup for animation system (destructor)
 void AnimationDestroy(void);
 
 /**
- * @brief Get the Animation Database Record object
+ * @brief Get the 3D Animation Database Record
  *
  * @param characterName the character which own returned record
  * @return DatabaseRecordAnimationDir* pointer to record or NULL
  */
 const DatabaseRecord3DAnimation* AnimationGetCharacterData(char* characterName);
 
-/// @brief get specific animation
-/// @param animationCollection animation record of given character
-/// @param animationName name of the animation
-/// @return animation data or NULL
-const AnimationDir* Animation3DGetAnimation(DatabaseRecord3DAnimation* animationCollection, char* animationName);
+/**
+ * @brief get given animation(melee,idle,...)
+ *
+ * @param animationCollection record of all animations of this object
+ * @param animationName name of the animation
+ * @return const Animation3D* animation pointer of NULL
+ */
+const Animation3D* Animation3DGetAnimation(DatabaseRecord3DAnimation* animationCollection, char* animationName);
 
-void AnimationGetAnimationsNames(char* buffer, DatabaseRecord3DAnimation* animationCollection);
-// ------------------------------
+/**
+ * @brief get common animation data for given animations
+ *
+ * @param animName name of the animation (melee,idle,...)
+ * @return CommonAnimData* common animation data pointer or NULL
+ */
 CommonAnimData* AnimationGetCommonAnimData(const char* animName);
+#pragma endregion
+
 #endif
