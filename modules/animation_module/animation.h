@@ -41,13 +41,13 @@ typedef enum DIRECTION{
 /// @brief structure with values used in each animation
 typedef struct AnimationBaseData
 {
-    char name[32];  //< name as ID
+    char name[32];                            //< name as ID
+    Callback callbacks[MAX_ANIMATION_FRAMES]; //< callback of this frame -> stored as a linked list
 } AnimationBaseData;
 
 /// @brief data for each frame
 typedef struct FrameData{
-    Sprite sprite;      //< sprite of this frame
-    Callback* callback; //< callback of this frame -> stored as a linked list
+    Sprite sprite;      //< sprite of this frame    
 } FrameData;
 
 /// @brief one "direction" of frames (just an array)
