@@ -13,30 +13,24 @@
 
 #include "raylib.h"
 
-#define MAX_PATH_LENGTH 128 /**< path of the loaded texture (also a key), maybe just relative path from resources/textures should be ok */
-#define MAX_TEXTURES 32 /**< max textures per manager */
-#define TEXTURE_CHARACTER_PATH "../resources/characters/" /**< path to characters resources */
+#define MAX_PATH_LENGTH 128                                 //< path of the loaded texture (also a key)
+#define MAX_TEXTURES 32                                     //< max textures per manager
 
 #pragma region STRUCTS
-/**
- * @brief individual texture resource record of path and texture
- *
- */
-typedef struct {
+/// @brief individual texture resource record of path and texture
+typedef struct TextureResource{
     char path[MAX_PATH_LENGTH];
     Texture2D texture;
 } TextureResource;
 
-/**
- * @brief collection of texture resources
- *
- */
+/// @brief collection of texture resources(array)
 typedef struct {
     TextureResource textures[MAX_TEXTURES];
     int textureCount;
 } ResourceManagerTexture;
 #pragma endregion
 
+#pragma region API
 /**
  * @brief Initialize resource manager
  *
@@ -58,6 +52,7 @@ void ResourceManagerTextureUnloadAll(ResourceManagerTexture* manager);
  * @param path path of the texture relative to "resources/" folder
  * @return Texture2D returned texture struct
  */
-Texture2D ResourceManagerGetTexture(ResourceManagerTexture* manager, const char* texturePath);
+Texture2D ResourceManagerGetTexture(ResourceManagerTexture* manager, char* texturePath);
+#pragma endregion
 
 #endif

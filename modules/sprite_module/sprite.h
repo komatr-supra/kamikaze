@@ -7,9 +7,9 @@
 #ifndef SPRITE_H
 #define SPRITE_H
 
-#define MAX_SPRITE_NAME_LENGHT 32 //**< maximum name lenght for sprite identification */
+#include "raylib.h"
 
-#include "raylib.h"     //there are a raylib's structs
+#define MAX_SPRITE_NAME_LENGHT 32 //< maximum name lenght for sprite identification
 
 /**
  * @brief structure with information, witch part of the texture should be used
@@ -17,10 +17,10 @@
  */
 typedef struct Sprite
 {
-    char name[MAX_SPRITE_NAME_LENGHT]; //**< name oft the sprite */
-    Texture2D texture;  //**< texture, where this sprite is */
-    Rectangle sourceRect;   //**< location on the texture */
-    Vector2 origin; //**<  point of the sprite's origin*/
+    char name[MAX_SPRITE_NAME_LENGHT];  //< name of the sprite
+    Texture2D texture;                  //< texture, where this sprite is
+    Rectangle sourceRect;               //< location on the texture
+    Vector2 origin;                     //<  point of the sprite's origin
 } Sprite;
 
 /**
