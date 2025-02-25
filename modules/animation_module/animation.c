@@ -14,7 +14,7 @@
 #include "resource_manager.h"
 
 #define MAX_ANIMATIONS_IN_DATABASE 500  //< maximum animations loaded at the same time
-#define ANIMATION_SPEED_DEFAULT 10      //< default speed of animation (fps)
+#define ANIMATION_SPEED_DEFAULT 10      //< default speed of animation (fps) 10 for test
 #define MAX_DIFF_ANIMS 30               //< maximum number of common animation data
 #define CHARACTERS_PATH "resources/characters/"
 
