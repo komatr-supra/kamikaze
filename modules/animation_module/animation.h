@@ -18,14 +18,19 @@
 #define MAX_OWNER_NAME_LENGHT 32        //< max lenght of the key value
 #define MAX_ANIMATION_FRAMES 16         //< max animation frames per clip
 
-#pragma region STRUCTS
-/// @brief callback structure (maybe private??)
-typedef struct Callback{
-    void (*fnc)(void*, void*);  //< callback function "void function(animator, param->below)"
-    void* param;                //< parameter passed to function
-    struct Callback* next;      //< for list of callbacks
-} Callback;
+#pragma region CALLBACK FLAGS
+typedef enum AnimationCallbackFlags{
+    ANIM_CALL_NONE = 0,
+    ANIM_CALL_WEAPON_START = 1 << 0,
+    ANIM_CALL_WEAPON_ACTION = 1 << 1,
+    ANIM_CALL_WEAPON_END = 1 << 2,
+    ANIM_CALL_STEP = 1 << 3,
+    ANIM_CALL_JUMP = 1 << 4,
+    ANIM_CALL_LAND = 1 << 5
+} AnimationCallbackFlags;
+#pragma endregion
 
+#pragma region STRUCTS
 /// @brief animation play type (loop,single,pingpong...)
 typedef enum ANIM_TYPE{
     ANIM_TYPE_LOOP,     //< play animation in loop 0->n and again from zero (forever)
@@ -42,12 +47,11 @@ typedef enum DIRECTION{
 typedef struct AnimationBaseData
 {
     char name[32];                            //< name as ID
-    Callback callbacks[MAX_ANIMATION_FRAMES]; //< callback of this frame -> stored as a linked list
 } AnimationBaseData;
 
 /// @brief data for each frame
 typedef struct FrameData{
-    Sprite sprite;      //< sprite of this frame    
+    Sprite sprite;          //< sprite of this frame
 } FrameData;
 
 /// @brief one "direction" of frames (just an array)
@@ -79,6 +83,7 @@ typedef struct CommonAnimData{
     char animName[32];
     int speedMS;
     ANIM_TYPE animationType;
+    u_int callbackFlags[MAX_ANIMATION_FRAMES];    //< flag bits (none, step, particle, action, ...)
 } CommonAnimData;
 #pragma endregion
 

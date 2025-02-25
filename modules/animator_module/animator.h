@@ -27,6 +27,7 @@ typedef struct AnimatorBaseData
 /// @brief all data for 3D animation
 typedef struct Animator3D
 {
+    size_t ownerID;
     bool isRunning;
     float speedMultiplier;
     DIRECTION direction;
@@ -34,7 +35,7 @@ typedef struct Animator3D
     const DatabaseRecord3DAnimation* animations;
     const Animation3D* currentAnimation;
     size_t timerHandle;
-    ANIM_TYPE currentAnimType;
+    CommonAnimData* sharedData;
     bool isPingpongGoingBack;
 } Animator3D;
 

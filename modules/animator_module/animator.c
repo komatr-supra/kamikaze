@@ -20,7 +20,35 @@
 const void Animator3DFrameNext(void* animator)
 {
     Animator3D* animatorLocal = ((Animator3D*)animator);
-    switch (animatorLocal->currentAnimType)
+    u_int flags = animatorLocal->sharedData->callbackFlags[animatorLocal->data.currentFrame];
+    if(flags)
+    {
+        switch (flags)
+        {
+        case ANIM_CALL_WEAPON_START:
+            TraceLog(LOG_DEBUG, "weapon start at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
+            break;
+        case ANIM_CALL_WEAPON_ACTION:
+            TraceLog(LOG_DEBUG, "weapon action at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
+            break;
+        case ANIM_CALL_WEAPON_END:
+            TraceLog(LOG_DEBUG, "weapon end at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
+            break;
+        case ANIM_CALL_STEP:
+            TraceLog(LOG_DEBUG, "step at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
+            break;
+        case ANIM_CALL_JUMP:
+            TraceLog(LOG_DEBUG, "jump at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
+            break;
+        case ANIM_CALL_LAND:
+            TraceLog(LOG_DEBUG, "land at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
+            break;
+        default:
+            TraceLog(LOG_DEBUG, "non specific callback in animation");
+            break;
+        }
+    }
+    switch (animatorLocal->sharedData->animationType)
     {
         case ANIM_TYPE_LOOP:
         ++animatorLocal->data.currentFrame;
@@ -64,6 +92,7 @@ const void Animator3DFrameNext(void* animator)
 #pragma region API
 void Animator3DCreate(Animator3D* animator, const DatabaseRecord3DAnimation* objectAnimations, DIRECTION direction)
 {
+    animator->ownerID = 1;  //todo fix ID
     animator->direction = direction;
     animator->animations = objectAnimations;
     animator->data.currentFrame = 0;
@@ -96,11 +125,10 @@ void Animator3DSetAnimation(Animator3D* animator, int animationIndex)
     if(data == NULL)
     {
         TraceLog(LOG_ERROR, "cant find common data for animation: %s", animator->currentAnimation->data.name);
-        animator->currentAnimType = ANIM_TYPE_LOOP;
     }
     else
     {
-        animator->currentAnimType = data->animationType;
+        animator->sharedData = data;
     }
     animator->data.currentFrame = 0;
     Animator3DStart(animator);

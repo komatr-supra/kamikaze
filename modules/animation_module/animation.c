@@ -14,7 +14,7 @@
 #include "resource_manager.h"
 
 #define MAX_ANIMATIONS_IN_DATABASE 500  //< maximum animations loaded at the same time
-#define ANIMATION_SPEED_DEFAULT 20      //< default speed of animation (fps)
+#define ANIMATION_SPEED_DEFAULT 10      //< default speed of animation (fps)
 #define MAX_DIFF_ANIMS 30               //< maximum number of common animation data
 #define CHARACTERS_PATH "resources/characters/"
 
@@ -87,6 +87,8 @@ static DatabaseRecord3DAnimation* CreateRecord(char* entity);
  * @note frameData format: "animationName_angle_spriteNameID,textureName,xPosOnTexture,yPosOnTexture,width,height,xOrigin,yOrigin" x and y origin are top left corner offset
  */
 static void AnimationPush3DFrame(DatabaseRecord3DAnimation* ad, char* frameData, char* characterPath);
+
+static void LoadDefaultCallbacks(char* path);
 #pragma endregion
 
 #pragma region API
@@ -126,11 +128,11 @@ void AnimationInit(void)
         return;
     }
     // common shared animation data(name,speed,animType)
-    char* buffer = "resources/characters/characters.aed";
-    FILE* f_animData = fopen(buffer, "r");
+    char* sharedDataPath = "resources/characters/characters.aed";
+    FILE* f_animData = fopen(sharedDataPath, "r");
     if(f_animData == NULL)
     {
-        TraceLog(LOG_ERROR, "character animation data file cant be opened: %s", buffer);
+        TraceLog(LOG_ERROR, "character animation data file cant be opened: %s", sharedDataPath);
     }
     else
     {
@@ -161,6 +163,9 @@ void AnimationInit(void)
         }
         free(line);
         fclose(f_animData);
+        // load default callbacks
+        char* defaultCallbacksPath = "resources/characters/characters.acd";
+        LoadDefaultCallbacks(defaultCallbacksPath);
     }
 }
 
@@ -201,6 +206,42 @@ const Animation3D* Animation3DGetAnimation(DatabaseRecord3DAnimation* animationC
 #pragma endregion
 
 #pragma region PRIVATE FNC
+AnimationCallbackFlags GetCallbackFlag(char* text)
+{
+    if(strcmp(text, "weapon_start") == 0) return ANIM_CALL_WEAPON_START;
+    if(strcmp(text, "weapon_action") == 0) return ANIM_CALL_WEAPON_ACTION;
+    if(strcmp(text, "weapon_end") == 0) return ANIM_CALL_WEAPON_END;
+    if(strcmp(text, "step") == 0) return ANIM_CALL_STEP;
+    if(strcmp(text, "jump") == 0) return ANIM_CALL_JUMP;
+    if(strcmp(text, "land") == 0) return ANIM_CALL_LAND;
+    TraceLog(LOG_WARNING, "callback flag: \"%s\" not found!", text);
+}
+
+static void LoadDefaultCallbacks(char* path)
+{
+    FILE* f_defaultCallbacks = fopen(path, "r");
+    if(f_defaultCallbacks == NULL)
+    {
+        TraceLog(LOG_ERROR, "can't load default animation callback file: %s", path);
+        return;
+    }
+    char buffer[32] = {0};
+    while (fgets(buffer, sizeof(buffer), f_defaultCallbacks))
+    {
+        // animation name
+        char* token = strtok(buffer, ",");
+        CommonAnimData* animData = AnimationGetCommonAnimData(token);
+        // frame
+        token = strtok(NULL, ",");
+        int frame = atoi(token);
+        // callback type
+        token = strtok(NULL, ",");
+        AnimationCallbackFlags flag = GetCallbackFlag(token);
+        animData->callbackFlags[frame] |= flag;
+    }
+    fclose(f_defaultCallbacks);
+}
+
 static ANIM_TYPE GetAnimType(char* text)
 {
     if(strcmp(text, "loop") == 0) return ANIM_TYPE_LOOP;
