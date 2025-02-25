@@ -112,6 +112,7 @@ SetTraceLogLevel(LOG_DEBUG);
 
             DrawText(animator.currentAnimation->dirAnimations[EAST].frames[animator.data.currentFrame].sprite.name, 130, 100, 10, WHITE);
             DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
+            EndMode2D();
         EndDrawing();
     }
 
