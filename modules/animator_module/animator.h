@@ -15,17 +15,7 @@
 #include "raylib.h"
 #include "animation.h"
 
-#define ANIMATION_SPEED_DEFAULT 1
-
-typedef enum AnimatorCallbackEnum{
-    ANIMATOR_CALL_START,
-    ANIMATOR_CALL_END,
-    ANIMATOR_CALL_ACTION,
-    ANIMATOR_CALL_SOUND,
-    ANIMATOR_CALL_PARTICLES,
-    ANIMATOR_CALL_SPECIAL,
-    ANIMATOR_CALL_TOTAL_COUNT
-} AnimatorCallbackEnum;
+#define ANIMATOR_SPEED_DEFAULT 1
 
 typedef struct AnimatorCallback{
     void (*callback)(void*);
@@ -40,17 +30,17 @@ typedef struct AnimatorBaseData
     int currentFrame;
     bool isPingpongGoingBack;
     size_t timerHandle;
-    AnimatorCallback callbacks[ANIMATOR_CALL_TOTAL_COUNT];
+    AnimatorCallback callbacks[ANIMATION_CALLBACK_FLAGS_COUNT];
 } AnimatorBaseData;
 
 /// @brief all data for 3D animation
 typedef struct Animator3D
-{    
+{
     DIRECTION direction;
     AnimatorBaseData data;
     const DatabaseRecord3DAnimation* animations;
     const Animation3D* currentAnimation;
-    CommonAnimData* sharedData;    
+    CommonAnimData* sharedData;
 } Animator3D;
 
 /**
@@ -102,5 +92,8 @@ void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir);
 void Animator3DDraw(Animator3D* animator, float x, float y);
 
 
-void AnimatorSetCallback(AnimatorBaseData* animatorBaseData, AnimatorCallbackEnum callbackType, void(*callbackFunction)(void*), void* callbackData);
+void AnimatorSetCallback(AnimatorBaseData* animatorBaseData, AnimationCallbackFlags callbackType, void(*callbackFunction)(void*), void* callbackData);
+
+
+int AnimatorGetAnimationIndex(Animator3D* animator, const char* animationName);
 #endif

@@ -19,6 +19,7 @@
 #define CHARACTERS_PATH "resources/characters/"
 
 #pragma region VARIABLES
+const char* AnimationFlagCallbackNames[] = {"animation start", "animation end", "event action", "event start", "event end", "event special"};
 static DatabaseRecord3DAnimation* databaseRecords3D;    //< 3D animations record collection
 static int animationsInDatabaseCount;                   //< total animation records
 static ResourceManagerTexture* resourceManager;         //< local resource manager
@@ -208,12 +209,10 @@ const Animation3D* Animation3DGetAnimation(DatabaseRecord3DAnimation* animationC
 #pragma region PRIVATE FNC
 AnimationCallbackFlags GetCallbackFlag(char* text)
 {
-    if(strcmp(text, "atk") == 0) return ANIM_CALL_ATK;
-    if(strcmp(text, "special") == 0) return ANIM_CALL_SPECIAL;
-    if(strcmp(text, "part") == 0) return ANIM_CALL_PART;
-    if(strcmp(text, "snd") == 0) return ANIM_CALL_SND;
-    if(strcmp(text, "start") == 0) return ANIM_CALL_START;
-    if(strcmp(text, "end") == 0) return ANIM_CALL_END;
+    if(strcmp(text, "action") == 0) return ANIM_CALL_EVENT_ACTION;
+    if(strcmp(text, "special") == 0) return ANIM_CALL_EVENT_SPECIAL;
+    if(strcmp(text, "start") == 0) return ANIM_CALL_EVENT_START;
+    if(strcmp(text, "end") == 0) return ANIM_CALL_EVENT_END;
     TraceLog(LOG_WARNING, "callback flag: \"%s\" not found!", text);
 }
 

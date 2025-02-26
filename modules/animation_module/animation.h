@@ -17,17 +17,20 @@
 #define MAX_ANIMATIONS_PER_ENTITY 20    //< maximum animations per entity
 #define MAX_OWNER_NAME_LENGHT 32        //< max lenght of the key value
 #define MAX_ANIMATION_FRAMES 16         //< max animation frames per clip
+#define ANIMATION_CALLBACK_FLAGS_COUNT 6
 
 #pragma region CALLBACK FLAGS
+
 typedef enum AnimationCallbackFlags{
-    ANIM_CALL_NONE = 0,
-    ANIM_CALL_ATK = 1 << 0,
-    ANIM_CALL_SND = 1 << 1,
-    ANIM_CALL_PART = 1 << 2,
-    ANIM_CALL_START = 1 << 3,
-    ANIM_CALL_END = 1 << 4,
-    ANIM_CALL_SPECIAL = 1 << 5
+    ANIM_CALL_ANIM_START= 1 << 0,
+    ANIM_CALL_ANIM_END= 1 << 1,
+    ANIM_CALL_EVENT_ACTION = 1 << 2,
+    ANIM_CALL_EVENT_START = 1 << 3,
+    ANIM_CALL_EVENT_END = 1 << 4,
+    ANIM_CALL_EVENT_SPECIAL = 1 << 5
 } AnimationCallbackFlags;
+
+extern const char* AnimationFlagCallbackNames[];
 #pragma endregion
 
 #pragma region STRUCTS
