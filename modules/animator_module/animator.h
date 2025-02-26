@@ -17,26 +17,40 @@
 
 #define ANIMATION_SPEED_DEFAULT 1
 
+typedef enum AnimatorCallbackEnum{
+    ANIMATOR_CALL_START,
+    ANIMATOR_CALL_END,
+    ANIMATOR_CALL_ACTION,
+    ANIMATOR_CALL_SOUND,
+    ANIMATOR_CALL_PARTICLES,
+    ANIMATOR_CALL_SPECIAL,
+    ANIMATOR_CALL_TOTAL_COUNT
+} AnimatorCallbackEnum;
+
+typedef struct AnimatorCallback{
+    void (*callback)(void*);
+    void* callbackData;
+} AnimatorCallback;
+
 /// @brief base data for 2D and 3D animations
 typedef struct AnimatorBaseData
 {
-    int speedMultiplier;
+    size_t ownerID;
+    float speedMultiplier;
     int currentFrame;
+    bool isPingpongGoingBack;
+    size_t timerHandle;
+    AnimatorCallback callbacks[ANIMATOR_CALL_TOTAL_COUNT];
 } AnimatorBaseData;
 
 /// @brief all data for 3D animation
 typedef struct Animator3D
-{
-    size_t ownerID;
-    bool isRunning;
-    float speedMultiplier;
+{    
     DIRECTION direction;
     AnimatorBaseData data;
     const DatabaseRecord3DAnimation* animations;
     const Animation3D* currentAnimation;
-    size_t timerHandle;
-    CommonAnimData* sharedData;
-    bool isPingpongGoingBack;
+    CommonAnimData* sharedData;    
 } Animator3D;
 
 /**
@@ -87,4 +101,6 @@ void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir);
  */
 void Animator3DDraw(Animator3D* animator, float x, float y);
 
+
+void AnimatorSetCallback(AnimatorBaseData* animatorBaseData, AnimatorCallbackEnum callbackType, void(*callbackFunction)(void*), void* callbackData);
 #endif

@@ -7,9 +7,11 @@
 #include "timer.h"
 #include "animator.h"
 
-void TimerTestPrintOneTime(void* data)
+static int testDamage = 8;
+
+void AttackTestFNC(void* data)
 {
-    TraceLog(LOG_INFO, "one time timer");
+    TraceLog(LOG_INFO, "attacking for: %d", *(int*)data);
 }
 
 void TimerTestPrintRepeat(void* data)
@@ -53,7 +55,7 @@ SetTraceLogLevel(LOG_DEBUG);
     Animator3DCreate(&animator, data, EAST);
     int animIndex = 0;
     Animator3DSetAnimation(&animator, animIndex);
-
+    AnimatorSetCallback(&animator.data, ANIMATOR_CALL_ACTION, AttackTestFNC, &testDamage);
 
     while (!WindowShouldClose())
     {
@@ -76,8 +78,8 @@ SetTraceLogLevel(LOG_DEBUG);
         }
         if(IsKeyPressed(KEY_N))
         {
-            if(animator.isRunning) Animator3DStop(&animator);
-            else Animator3DStart(&animator);
+            //if(animator.isRunning) Animator3DStop(&animator);
+            //else Animator3DStart(&animator);
 
         }
         if(IsKeyPressed(KEY_K))

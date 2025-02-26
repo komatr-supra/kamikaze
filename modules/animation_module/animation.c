@@ -208,12 +208,12 @@ const Animation3D* Animation3DGetAnimation(DatabaseRecord3DAnimation* animationC
 #pragma region PRIVATE FNC
 AnimationCallbackFlags GetCallbackFlag(char* text)
 {
-    if(strcmp(text, "weapon_start") == 0) return ANIM_CALL_WEAPON_START;
-    if(strcmp(text, "weapon_action") == 0) return ANIM_CALL_WEAPON_ACTION;
-    if(strcmp(text, "weapon_end") == 0) return ANIM_CALL_WEAPON_END;
-    if(strcmp(text, "step") == 0) return ANIM_CALL_STEP;
-    if(strcmp(text, "jump") == 0) return ANIM_CALL_JUMP;
-    if(strcmp(text, "land") == 0) return ANIM_CALL_LAND;
+    if(strcmp(text, "atk") == 0) return ANIM_CALL_ATK;
+    if(strcmp(text, "special") == 0) return ANIM_CALL_SPECIAL;
+    if(strcmp(text, "part") == 0) return ANIM_CALL_PART;
+    if(strcmp(text, "snd") == 0) return ANIM_CALL_SND;
+    if(strcmp(text, "start") == 0) return ANIM_CALL_START;
+    if(strcmp(text, "end") == 0) return ANIM_CALL_END;
     TraceLog(LOG_WARNING, "callback flag: \"%s\" not found!", text);
 }
 
@@ -235,7 +235,7 @@ static void LoadDefaultCallbacks(char* path)
         token = strtok(NULL, ",");
         int frame = atoi(token);
         // callback type
-        token = strtok(NULL, ",");
+        token = strtok(NULL, "\n");
         AnimationCallbackFlags flag = GetCallbackFlag(token);
         animData->callbackFlags[frame] |= flag;
     }
@@ -260,7 +260,7 @@ static DatabaseRecord3DAnimation* AnimationLoadCharacter(char* characterName)
     strcat(buffer, characterName);
     strcat(buffer, "/");
     strcat(buffer, characterName);
-    strcat(buffer, ".txt");
+    strcat(buffer, ".kmtd");
     FILE* f_character = fopen(buffer, "r");
     if(f_character == NULL)
     {

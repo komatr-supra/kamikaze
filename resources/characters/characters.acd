@@ -1,1 +1,12 @@
-melee2,8,weapon_action
+castspell,6,atk
+frontflip,4,start
+frontflip,11,end
+melee2,8,atk
+melee,8,atk
+meleespin,4,start
+meleespin,10,atk
+meleespin,11,end
+special1,10,atk
+special2,9,atk
+rolling,3,start
+rolling,7,end
