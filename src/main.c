@@ -7,9 +7,11 @@
 #include "timer.h"
 #include "animator.h"
 
-void TimerTestPrintOneTime(void* data)
+static int testDamage = 8;
+
+void AttackTestFNC(void* data)
 {
-    TraceLog(LOG_INFO, "one time timer");
+    TraceLog(LOG_INFO, "attacking for: %d", *(int*)data);
 }
 
 void TimerTestPrintRepeat(void* data)
@@ -30,16 +32,16 @@ void TimerTestPrintTimes(void* data)
 
 int main(void)
 {
-    const int screenWidth = 1200;
-    const int screenHeight = 800;
+    const int screenWidth = 600;
+    const int screenHeight = 400;
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Kamikaze");
 
     Vector2 playerPosition = { (float)screenWidth/2, (float)screenHeight/2 };
 
     Camera2D camera = { 0 };
-    camera.offset = (Vector2){600, 400};
-    camera.target = (Vector2){300, 200};
+    camera.offset = (Vector2){300, 200};
+    camera.target = playerPosition;
     camera.zoom = 2.0f;
 
     SetTargetFPS(60);
@@ -48,12 +50,12 @@ int main(void)
 SetTraceLogLevel(LOG_DEBUG);
     TimerInit();
     AnimationInit();
-    Animator3D animator;
     const DatabaseRecord3DAnimation* data = AnimationGetCharacterData("knight");
+    Animator3D animator;
     Animator3DCreate(&animator, data, EAST);
-    int animIndex = 0;
+    int animIndex = AnimatorGetAnimationIndex(&animator, "melee");
     Animator3DSetAnimation(&animator, animIndex);
-
+    AnimatorSetCallback(&animator.data, ANIM_CALL_EVENT_ACTION, AttackTestFNC, &testDamage);
 
     while (!WindowShouldClose())
     {
@@ -76,8 +78,8 @@ SetTraceLogLevel(LOG_DEBUG);
         }
         if(IsKeyPressed(KEY_N))
         {
-            if(animator.isRunning) Animator3DStop(&animator);
-            else Animator3DStart(&animator);
+            //if(animator.isRunning) Animator3DStop(&animator);
+            //else Animator3DStart(&animator);
 
         }
         if(IsKeyPressed(KEY_K))
@@ -96,22 +98,22 @@ SetTraceLogLevel(LOG_DEBUG);
 
             ClearBackground(DARKGREEN);
             BeginMode2D(camera);
-            Animator3DDraw(&animator, 100.0f, 100.0f);
-            DrawCircle(100, 100, 3, RED);
+            Animator3DDraw(&animator, playerPosition.x, playerPosition.y);
             const char* animName = animator.currentAnimation->data.name;
             char* animType;
             if(animator.sharedData->animationType == ANIM_TYPE_LOOP) animType = "loop";
             else if(animator.sharedData->animationType == ANIM_TYPE_SINGLE) animType = "single";
             else if(animator.sharedData->animationType == ANIM_TYPE_PINGPONG) animType = "ping-pong";
             else animType = "NOT DEFINED";
-            DrawText(animName, 130, 80, 10, WHITE);
-            DrawText(animType, 130, 90, 10, WHITE);
+            DrawText(animName, playerPosition.x, playerPosition.y + 10, 10, WHITE);
+            DrawText(animType, playerPosition.x, playerPosition.y + 20, 10, WHITE);
             char buffer[16];
             sprintf(buffer, "%d", animator.data.currentFrame);
-            DrawText(buffer, 180, 90, 10, WHITE);
+            DrawText(buffer, playerPosition.x, playerPosition.y + 30, 10, WHITE);
 
-            DrawText(animator.currentAnimation->dirAnimations[EAST].frames[animator.data.currentFrame].sprite.name, 130, 100, 10, WHITE);
-            DrawRectangleV(playerPosition, (Vector2){25, 25}, MAROON);
+            DrawText(animator.currentAnimation->dirAnimations[EAST].frames[animator.data.currentFrame].sprite.name,
+                playerPosition.x, playerPosition.y + 40, 10, WHITE);
+            DrawCircle(playerPosition.x, playerPosition.y, 3, MAROON);
             EndMode2D();
         EndDrawing();
     }

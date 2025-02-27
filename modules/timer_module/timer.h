@@ -45,8 +45,10 @@ size_t TimerSet(unsigned int duration, int repeats, void (*callback)(void*), voi
  *
  * @param handle unique handle of the timer
  * @param triggerCallback if callback should be triggered at cancel
+ * @return true timer was deleted
+ * @return false timer cancel failed
  */
-void TimerCancel(size_t handle, bool triggerCallback);
+bool TimerCancel(size_t handle, bool triggerCallback);
 
 /**
  * @brief set pause for timers

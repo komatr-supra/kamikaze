@@ -137,12 +137,13 @@ void TimerTicks(int deltaTimeMs)
     }
 }
 
-void TimerCancel(size_t handle, bool triggerCallback)
+bool TimerCancel(size_t handle, bool triggerCallback)
 {
+    if(handle == 0) return false;
     // find
     int hashIndex = GetHashIndex(handle);
     Timer* checkedTimer = m_hashTable[hashIndex];
-    if(checkedTimer == NULL) return; // no entry at given index
+    if(checkedTimer == NULL) return false; // no entry at given index
     if(triggerCallback) checkedTimer->callback(checkedTimer->callbackData);
     Timer* previous = NULL;
     while (checkedTimer->id != handle && checkedTimer->next != NULL)
@@ -160,6 +161,7 @@ void TimerCancel(size_t handle, bool triggerCallback)
     // from hash
     if(previous != NULL) previous->next = checkedTimer->next;
     else m_hashTable[hashIndex] = checkedTimer->next;
+    return true;
 }
 
 void TimerPauseSet(bool isPaused)

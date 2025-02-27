@@ -8,8 +8,11 @@
  * @copyright Copyright (c) 2025
  *
  */
+#include <string.h>
 #include "animator.h"
 #include "timer.h"
+
+
 
 #pragma region DECLARATIONS
 /**
@@ -19,72 +22,69 @@
  */
 const void Animator3DFrameNext(void* animator)
 {
-    Animator3D* animatorLocal = ((Animator3D*)animator);
+    Animator3D* animatorLocal = (Animator3D*)animator;
+    // callback flags
     u_int flags = animatorLocal->sharedData->callbackFlags[animatorLocal->data.currentFrame];
-    if(flags)
+    if (flags)
     {
-        switch (flags)
+        for (int i = 2; i < ANIMATION_CALLBACK_FLAGS_COUNT; i++)
         {
-        case ANIM_CALL_WEAPON_START:
-            TraceLog(LOG_DEBUG, "weapon start at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
-            break;
-        case ANIM_CALL_WEAPON_ACTION:
-            TraceLog(LOG_DEBUG, "weapon action at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
-            break;
-        case ANIM_CALL_WEAPON_END:
-            TraceLog(LOG_DEBUG, "weapon end at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
-            break;
-        case ANIM_CALL_STEP:
-            TraceLog(LOG_DEBUG, "step at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
-            break;
-        case ANIM_CALL_JUMP:
-            TraceLog(LOG_DEBUG, "jump at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
-            break;
-        case ANIM_CALL_LAND:
-            TraceLog(LOG_DEBUG, "land at frame %d, object ID: %u", animatorLocal->data.currentFrame, animatorLocal->ownerID);
-            break;
-        default:
-            TraceLog(LOG_DEBUG, "non specific callback in animation");
-            break;
+            if (flags & (1 << i))
+            {
+                TraceLog(LOG_DEBUG, "%s in animation: %s at frame %d, object ID: %u",
+                    AnimationFlagCallbackNames[i], animatorLocal->currentAnimation->data.name,
+                    animatorLocal->data.currentFrame, animatorLocal->data.ownerID);
+
+                if (animatorLocal->data.callbacks[i].callback != NULL)
+                {
+                    animatorLocal->data.callbacks[i].callback(
+                        animatorLocal->data.callbacks[i].callbackData
+                    );
+                }
+            }
         }
     }
+    // frame
+    size_t frameCount = animatorLocal->currentAnimation->dirAnimations->frameCount;
     switch (animatorLocal->sharedData->animationType)
     {
         case ANIM_TYPE_LOOP:
-        ++animatorLocal->data.currentFrame;
-        if(animatorLocal->data.currentFrame >= animatorLocal->currentAnimation->dirAnimations->frameCount)
-        {
-            animatorLocal->data.currentFrame = 0;
-        }
-        break;
-    case ANIM_TYPE_SINGLE:
-        ++animatorLocal->data.currentFrame;
-        if(animatorLocal->data.currentFrame >= animatorLocal->currentAnimation->dirAnimations->frameCount)
-        {
-            animatorLocal->data.currentFrame = animatorLocal->currentAnimation->dirAnimations->frameCount - 1;
-            Animator3DStop(animatorLocal);
-        }
-        break;
-    case ANIM_TYPE_PINGPONG:
-        if(animatorLocal->isPingpongGoingBack)
-        {
-            --animatorLocal->data.currentFrame;
-            if(animatorLocal->data.currentFrame == 0)
-            {
-                Animator3DStop(animatorLocal);
-                animatorLocal->isPingpongGoingBack = false;
-            }
-        }
-        else
-        {
             ++animatorLocal->data.currentFrame;
-            if(animatorLocal->data.currentFrame >= animatorLocal->currentAnimation->dirAnimations->frameCount)
+            if (animatorLocal->data.currentFrame >= frameCount)
             {
-                animatorLocal->data.currentFrame = animatorLocal->currentAnimation->dirAnimations->frameCount - 1;
-                animatorLocal->isPingpongGoingBack = true;
+                animatorLocal->data.currentFrame = 0;
             }
-        }
-        break;
+            break;
+
+        case ANIM_TYPE_SINGLE:
+            ++animatorLocal->data.currentFrame;
+            if (animatorLocal->data.currentFrame >= frameCount)
+            {
+                animatorLocal->data.currentFrame = frameCount - 1;
+                Animator3DStop(animatorLocal);
+            }
+            break;
+
+        case ANIM_TYPE_PINGPONG:
+            if (animatorLocal->data.isPingpongGoingBack)
+            {
+                --animatorLocal->data.currentFrame;
+                if (animatorLocal->data.currentFrame == 0)
+                {
+                    Animator3DStop(animatorLocal);
+                    animatorLocal->data.isPingpongGoingBack = false;
+                }
+            }
+            else
+            {
+                ++animatorLocal->data.currentFrame;
+                if (animatorLocal->data.currentFrame >= frameCount)
+                {
+                    animatorLocal->data.currentFrame = frameCount - 1;
+                    animatorLocal->data.isPingpongGoingBack = true;
+                }
+            }
+            break;
     }
 }
 #pragma endregion
@@ -92,14 +92,20 @@ const void Animator3DFrameNext(void* animator)
 #pragma region API
 void Animator3DCreate(Animator3D* animator, const DatabaseRecord3DAnimation* objectAnimations, DIRECTION direction)
 {
-    animator->ownerID = 1;  //todo fix ID
-    animator->direction = direction;
-    animator->animations = objectAnimations;
-    animator->data.currentFrame = 0;
-    animator->data.speedMultiplier = ANIMATION_SPEED_DEFAULT;
-    animator->currentAnimation = NULL;
-    animator->speedMultiplier = ANIMATION_SPEED_DEFAULT;
-    animator->isRunning = false;
+    *animator = (Animator3D){
+        .data = {
+            .callbacks = {0},
+            .currentFrame = 0,
+            .isPingpongGoingBack = false,
+            .ownerID = 0,
+            .speedMultiplier = ANIMATOR_SPEED_DEFAULT,
+            .timerHandle = 0
+        },
+        .animations = objectAnimations,
+        .currentAnimation = NULL,
+        .direction = direction,
+        .sharedData = NULL
+    };
 }
 
 void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir)
@@ -119,6 +125,11 @@ void Animator3DDraw(Animator3D* animator, float x, float y)
 
 void Animator3DSetAnimation(Animator3D* animator, int animationIndex)
 {
+    if(animationIndex < 0 || animationIndex >= animator->animations->animationsCount)
+    {
+        TraceLog(LOG_ERROR, "want set animation in animator to index: %d, for character id: %u, maximum index is: %d", animationIndex, animator->data.ownerID, animator->animations->animationsCount - 1);
+        return;
+    }
     if(animator->currentAnimation == &animator->animations->animations[animationIndex]) return;
     animator->currentAnimation = &animator->animations->animations[animationIndex];
     CommonAnimData* data = AnimationGetCommonAnimData(animator->currentAnimation->data.name);
@@ -142,17 +153,37 @@ void Animator3DStart(Animator3D* animator)
         TraceLog(LOG_ERROR, "cant find common animation data for: %s", animator->currentAnimation->data.name);
         return;
     }
-    int frameTime = (int)(cad->speedMS * animator->speedMultiplier);
-    TimerCancel(animator->timerHandle, false);
-    animator->timerHandle = TimerSet(frameTime, -1, Animator3DFrameNext, animator);
-    animator->isRunning = true;
-    animator->isPingpongGoingBack = false;
+    int frameTime = (int)(cad->speedMS * animator->data.speedMultiplier);
+    TimerCancel(animator->data.timerHandle, false);
+    animator->data.timerHandle = TimerSet(frameTime, -1, Animator3DFrameNext, animator);
+    animator->data.isPingpongGoingBack = false;
+    if(animator->data.callbacks[0].callback != NULL) animator->data.callbacks[0].callback(animator->data.callbacks[0].callbackData);
 }
 
 void Animator3DStop(Animator3D* animator)
 {
-    animator->isRunning = false;
-    TimerCancel(animator->timerHandle, false);
-    animator->timerHandle = 0;
+    if(TimerCancel(animator->data.timerHandle, false))
+    {
+        if(animator->data.callbacks[1].callback != NULL) animator->data.callbacks[1].callback(animator->data.callbacks[1].callbackData);
+        animator->data.timerHandle = 0;
+    }
+}
+
+void AnimatorSetCallback(AnimatorBaseData* animatorBaseData, AnimationCallbackFlags callbackType, void(*callbackFunction)(void*), void* callbackData)
+{
+    int index = 0;
+    while ((callbackType >>= 1) > 0) index++;
+
+    animatorBaseData->callbacks[index].callback = callbackFunction;
+    animatorBaseData->callbacks[index].callbackData = callbackData;
+}
+
+int AnimatorGetAnimationIndex(Animator3D* animator, const char* animationName)
+{
+    for(int i = 0; i < animator->animations->animationsCount; i++)
+    {
+        if(strcmp(animator->animations->animations[i].data.name, animationName) == 0) return i;
+    }
+    return -1;
 }
 #pragma endregion

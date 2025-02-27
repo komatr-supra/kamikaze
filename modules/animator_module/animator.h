@@ -15,28 +15,32 @@
 #include "raylib.h"
 #include "animation.h"
 
-#define ANIMATION_SPEED_DEFAULT 1
+#define ANIMATOR_SPEED_DEFAULT 1
+
+typedef struct AnimatorCallback{
+    void (*callback)(void*);
+    void* callbackData;
+} AnimatorCallback;
 
 /// @brief base data for 2D and 3D animations
 typedef struct AnimatorBaseData
 {
-    int speedMultiplier;
+    size_t ownerID;
+    float speedMultiplier;
     int currentFrame;
+    bool isPingpongGoingBack;
+    size_t timerHandle;
+    AnimatorCallback callbacks[ANIMATION_CALLBACK_FLAGS_COUNT];
 } AnimatorBaseData;
 
 /// @brief all data for 3D animation
 typedef struct Animator3D
 {
-    size_t ownerID;
-    bool isRunning;
-    float speedMultiplier;
     DIRECTION direction;
     AnimatorBaseData data;
     const DatabaseRecord3DAnimation* animations;
     const Animation3D* currentAnimation;
-    size_t timerHandle;
     CommonAnimData* sharedData;
-    bool isPingpongGoingBack;
 } Animator3D;
 
 /**
@@ -87,4 +91,22 @@ void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir);
  */
 void Animator3DDraw(Animator3D* animator, float x, float y);
 
+/**
+ * @brief set function and data for given callback type
+ * @warning this should be reset at animation change
+ * @param animatorBaseData basic animation data 2D and 3D
+ * @param callbackType type of callback
+ * @param callbackFunction callback function "void (*fnc)(void*)"
+ * @param callbackData data passed to callback function "void*"
+ */
+void AnimatorSetCallback(AnimatorBaseData* animatorBaseData, AnimationCallbackFlags callbackType, void(*callbackFunction)(void*), void* callbackData);
+
+/**
+ * @brief get index animation for given animation name
+ * 
+ * @param animator animator, where to kook at
+ * @param animationName name of the animation
+ * @return int index of animation or -1 if FAIL(animation not found)
+ */
+int AnimatorGetAnimationIndex(Animator3D* animator, const char* animationName);
 #endif
