@@ -91,9 +91,22 @@ void Animator3DDirectionSet(Animator3D* animator, DIRECTION dir);
  */
 void Animator3DDraw(Animator3D* animator, float x, float y);
 
-
+/**
+ * @brief set function and data for given callback type
+ * @warning this should be reset at animation change
+ * @param animatorBaseData basic animation data 2D and 3D
+ * @param callbackType type of callback
+ * @param callbackFunction callback function "void (*fnc)(void*)"
+ * @param callbackData data passed to callback function "void*"
+ */
 void AnimatorSetCallback(AnimatorBaseData* animatorBaseData, AnimationCallbackFlags callbackType, void(*callbackFunction)(void*), void* callbackData);
 
-
+/**
+ * @brief get index animation for given animation name
+ * 
+ * @param animator animator, where to kook at
+ * @param animationName name of the animation
+ * @return int index of animation or -1 if FAIL(animation not found)
+ */
 int AnimatorGetAnimationIndex(Animator3D* animator, const char* animationName);
 #endif

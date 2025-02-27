@@ -46,16 +46,6 @@ const void Animator3DFrameNext(void* animator)
     }
     // frame
     size_t frameCount = animatorLocal->currentAnimation->dirAnimations->frameCount;
-    if(animatorLocal->data.currentFrame == 0)
-    {
-        TraceLog(LOG_DEBUG, "animation started");
-        animatorLocal->data.callbacks[0];
-    }
-    if(animatorLocal->currentAnimation->dirAnimations->frameCount - 1 == animatorLocal->data.currentFrame)
-    {
-        TraceLog(LOG_DEBUG, "animation finished");
-        animatorLocal->data.callbacks[1];
-    }
     switch (animatorLocal->sharedData->animationType)
     {
         case ANIM_TYPE_LOOP:
@@ -167,11 +157,16 @@ void Animator3DStart(Animator3D* animator)
     TimerCancel(animator->data.timerHandle, false);
     animator->data.timerHandle = TimerSet(frameTime, -1, Animator3DFrameNext, animator);
     animator->data.isPingpongGoingBack = false;
+    if(animator->data.callbacks[0].callback != NULL) animator->data.callbacks[0].callback(animator->data.callbacks[0].callbackData);
 }
 
 void Animator3DStop(Animator3D* animator)
 {
-    if(TimerCancel(animator->data.timerHandle, false)) animator->data.timerHandle = 0;
+    if(TimerCancel(animator->data.timerHandle, false))
+    {
+        if(animator->data.callbacks[1].callback != NULL) animator->data.callbacks[1].callback(animator->data.callbacks[1].callbackData);
+        animator->data.timerHandle = 0;
+    }
 }
 
 void AnimatorSetCallback(AnimatorBaseData* animatorBaseData, AnimationCallbackFlags callbackType, void(*callbackFunction)(void*), void* callbackData)
